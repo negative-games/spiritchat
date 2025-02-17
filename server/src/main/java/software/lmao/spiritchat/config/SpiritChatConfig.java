@@ -3,6 +3,8 @@ package software.lmao.spiritchat.config;
 import com.google.common.collect.Maps;
 import de.exlll.configlib.Comment;
 import de.exlll.configlib.Configuration;
+import games.negative.alumina.message.Message;
+import lombok.Getter;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +37,12 @@ public class SpiritChatConfig {
     })
     private Format chatFormat = new Format();
 
+    @Comment({
+            "",
+            "The messages sent from the plugin."
+    })
+    private Messages messages = new Messages();
+
     public boolean checkForUpdates() {
         return checkForUpdates;
     }
@@ -46,6 +54,11 @@ public class SpiritChatConfig {
     @NotNull
     public Format format() {
         return chatFormat;
+    }
+
+    @NotNull
+    public Messages messages() {
+        return messages;
     }
 
     @Configuration
@@ -99,6 +112,33 @@ public class SpiritChatConfig {
         public Optional<String> groupFormat(@NotNull String group) {
             return Optional.ofNullable(groupFormats.get(group));
         }
+    }
+
+    @Getter
+    @Configuration
+    public static class Messages {
+
+        @Comment({
+                "",
+                "The message sent when someone uses the admin command",
+                "without any arguments or incorrectly."
+        })
+        private Message adminCommandHelp = new Message(
+                "",
+                "<color:#2bbce0>SpiritChat</color>",
+                "<white><click:suggest_command:'/spiritchat reload'>/spiritchat reload</click></white> <gray>- Reload the plugin's configurations</gray>",
+                ""
+        );
+
+        @Comment({
+                "",
+                "The message sent when the plugin's configurations",
+                "are reloaded using the admin command."
+        })
+        private Message reloaded = new Message("<b><color:#2bbce0>SpiritChat</color></b> <dark_gray>></dark_gray> <gray>Reloaded the plugin's configurations!</gray>");
+
+
+
     }
 
 }

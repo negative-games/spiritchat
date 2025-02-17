@@ -5,13 +5,16 @@ import de.exlll.configlib.NameFormatters;
 import games.negative.alumina.AluminaPlugin;
 import games.negative.alumina.config.Configuration;
 import games.negative.alumina.logger.Logs;
+import games.negative.alumina.message.Message;
 import games.negative.alumina.util.Tasks;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.bstats.bukkit.Metrics;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
+import software.lmao.spiritchat.command.CommandSpiritChat;
 import software.lmao.spiritchat.config.SpiritChatConfig;
+import software.lmao.spiritchat.config.serializer.MessageSerializer;
 import software.lmao.spiritchat.listener.PlayerChatListener;
 import software.lmao.spiritchat.update.UpdateCheckTask;
 
@@ -36,6 +39,8 @@ public class SpiritChatPlugin extends AluminaPlugin {
             builder.setNameFormatter(NameFormatters.LOWER_KEBAB_CASE);
             builder.inputNulls(true);
             builder.outputNulls(false);
+
+            builder.addSerializer(Message.class, new MessageSerializer());
 
             builder.header("""
                     |---------------------------------------------|
@@ -67,12 +72,17 @@ public class SpiritChatPlugin extends AluminaPlugin {
         loadLuckPerms();
 
         registerListener(new PlayerChatListener());
+        registerCommand(new CommandSpiritChat());
     }
 
     @Override
     public void disable() {
         if (metrics != null) metrics.shutdown();
 
+    }
+
+    public void reload() {
+        config.reload();
     }
 
     private void loadLuckPerms() {
@@ -109,6 +119,11 @@ public class SpiritChatPlugin extends AluminaPlugin {
     @NotNull
     public static SpiritChatConfig config() {
         return instance().configuration().get();
+    }
+
+    @NotNull
+    public static SpiritChatConfig.Messages messages() {
+        return config().messages();
     }
 
     @CheckReturnValue

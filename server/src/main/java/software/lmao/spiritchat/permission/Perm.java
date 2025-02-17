@@ -12,6 +12,8 @@ public class Perm extends Permission {
 
     private static final String PREFIX = "spiritchat";
 
+    public static final Perm ADMIN = new Perm("admin");
+
     public static final Perm UPDATE_NOTIFICATIONS = new Perm("updates");
 
     public static final Perm CHAT_COLORS = new Perm("chat-colors");
