@@ -9,3 +9,6 @@ dependencies:
     PlaceholderAPI:
       load: AFTER
       required: false
+    LuckPerms:
+      load: AFTER
+      required: false
