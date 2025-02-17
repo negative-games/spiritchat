@@ -1,0 +1,79 @@
+plugins {
+    id 'java'
+    id "io.github.goooler.shadow" version "8.1.7"
+}
+
+def id = "SpiritChat"
+def group = 'software.lmao.spiritchat'
+def version = '0.1.0'
+
+repositories {
+    mavenCentral()
+
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+
+    maven { url 'https://repo.negative.games/repository/maven-snapshots/' }
+}
+
+dependencies {
+    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+
+    // ConfigLib
+    compileOnly("de.exlll:configlib-yaml:4.5.0")
+
+    // alumina
+    implementation("games.negative.alumina:alumina:3.1.0-SNAPSHOT")
+
+    // PlaceholderAPI
+    compileOnly("me.clip:placeholderapi:2.11.6")
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.32")
+    annotationProcessor("org.projectlombok:lombok:1.18.32")
+}
+
+
+def targetJavaVersion = 21
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('paper-plugin.yml') {
+        expand props
+    }
+}
+
+tasks {
+    build {
+        dependsOn(shadowJar)
+    }
+}
+
+shadowJar {
+    archiveBaseName.set("${id}")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+    destinationDirectory.set(file("${parent.projectDir}/build/libs"))
+
+    relocate "games.negative.alumina", "${group}.libs.alumina"
+}

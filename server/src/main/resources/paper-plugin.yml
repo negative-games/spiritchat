@@ -1,0 +1,11 @@
+name: SpiritChat
+version: '${version}'
+main: software.lmao.spiritchat.SpiritChatPlugin
+loader: software.lmao.spiritchat.loader.SpiritChatPluginLoader
+api-version: '1.21'
+authors: ["ericlmao"]
+dependencies:
+  server:
+    PlaceholderAPI:
+      load: AFTER
+      required: false

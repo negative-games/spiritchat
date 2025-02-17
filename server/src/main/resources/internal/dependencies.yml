@@ -1,0 +1,7 @@
+repositories:
+  central:
+    id: "central"
+    url: "https://repo.maven.apache.org/maven2/"
+
+dependencies:
+  - "de.exlll:configlib-yaml:4.5.0"
