@@ -10,6 +10,9 @@ import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.group.Group;
@@ -106,7 +109,6 @@ public class PlayerChatListener implements Listener {
             }
 
             try {
-                long start = System.currentTimeMillis();
                 String format = CACHE.get(source.getUniqueId());
 
                 Message.Builder builder = new Message(format).create()
@@ -114,9 +116,10 @@ public class PlayerChatListener implements Listener {
                         .replace("%username%", source.getName());
 
                 if (source.hasPermission(Perm.CHAT_COLORS)) {
-                    builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
+                    TextComponent component = LegacyComponentSerializer.legacyAmpersand().deserialize(PlainTextComponentSerializer.plainText().serialize(message));
+                    builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
                 } else {
-                    builder = builder.replace("%message%", message);
+                    builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
                 }
 
                 return builder.asComponent(source);
