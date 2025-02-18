@@ -60,9 +60,10 @@ public class PlayerChatListener implements Listener {
                     .replace("%username%", source.getName());
 
             if (source.hasPermission(Perm.CHAT_COLORS)) {
-                builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
+                TextComponent component = LegacyComponentSerializer.legacyAmpersand().deserialize(PlainTextComponentSerializer.plainText().serialize(message));
+                builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
             } else {
-                builder = builder.replace("%message%", message);
+                builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
             }
 
             return builder.asComponent(source);
