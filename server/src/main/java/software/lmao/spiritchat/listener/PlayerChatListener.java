@@ -20,6 +20,7 @@ import net.luckperms.api.model.user.User;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import software.lmao.spiritchat.SpiritChatPlugin;
 import software.lmao.spiritchat.config.SpiritChatConfig;
@@ -30,6 +31,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PlayerChatListener implements Listener {
@@ -64,6 +66,14 @@ public class PlayerChatListener implements Listener {
                 builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
             } else {
                 builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
+            }
+
+            if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM)) {
+                ItemStack item = source.getInventory().getItemInMainHand();
+                String itemMiniMessage = MiniMessage.miniMessage().serialize(item.displayName());
+
+                builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
+                builder = builder.replace("\\{item\\}", itemMiniMessage);
             }
 
             return builder.asComponent(source);
@@ -121,6 +131,14 @@ public class PlayerChatListener implements Listener {
                     builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
                 } else {
                     builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
+                }
+
+                if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM)) {
+                    ItemStack item = source.getInventory().getItemInMainHand();
+                    String itemMiniMessage = MiniMessage.miniMessage().serialize(item.displayName());
+
+                    builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
+                    builder = builder.replace("\\{item\\}", itemMiniMessage);
                 }
 
                 return builder.asComponent(source);
