@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import games.negative.alumina.logger.Logs;
 import games.negative.alumina.message.Message;
+import games.negative.alumina.util.MiniMessageUtil;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.Audience;
@@ -68,9 +69,9 @@ public class PlayerChatListener implements Listener {
                 builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
             }
 
-            if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM)) {
-                ItemStack item = source.getInventory().getItemInMainHand();
-                String itemMiniMessage = MiniMessage.miniMessage().serialize(item.displayName());
+            ItemStack item = source.getInventory().getItemInMainHand();
+            if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM) && isChatItemSyntax(message) && !item.getType().isAir()) {
+                String itemMiniMessage = createItemName(item.displayName());
 
                 builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
                 builder = builder.replace("\\{item\\}", itemMiniMessage);
@@ -133,9 +134,9 @@ public class PlayerChatListener implements Listener {
                     builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
                 }
 
-                if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM)) {
-                    ItemStack item = source.getInventory().getItemInMainHand();
-                    String itemMiniMessage = MiniMessage.miniMessage().serialize(item.displayName());
+                ItemStack item = source.getInventory().getItemInMainHand();
+                if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM) && isChatItemSyntax(message) && !item.getType().isAir()) {
+                    String itemMiniMessage = createItemName(item.displayName());
 
                     builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
                     builder = builder.replace("\\{item\\}", itemMiniMessage);
@@ -146,5 +147,31 @@ public class PlayerChatListener implements Listener {
                 return new StaticGlobalChatRenderer().render(source, display, message, viewer);
             }
         }
+    }
+
+    private boolean isChatItemSyntax(@NotNull Component message) {
+        String string = PlainTextComponentSerializer.plainText().serialize(message);
+        return string.contains("{i}") || string.contains("{item}");
+    }
+
+    private String createItemName(@NotNull Component component) {
+        String itemName = MiniMessage.miniMessage().serialize(component);
+
+        Integer start = null;
+        Integer end = null;
+        for (int i = 0; i < itemName.length(); i++) {
+            if (itemName.charAt(i) == '<') start = i;
+            if (itemName.charAt(i) == '>') end = i;
+
+            if (start != null && end != null) break;
+        }
+
+        if (start == null || end == null) return itemName;
+
+        String between = itemName.substring(start + 1, end);
+        if (between.contains("color")) return itemName + "</color>";
+        if (between.contains("gradient")) return itemName + "</gradient>";
+
+        return itemName + "</" + between + ">";
     }
 }
