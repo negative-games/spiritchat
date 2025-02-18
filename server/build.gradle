@@ -6,7 +6,7 @@ plugins {
 def id = "SpiritChat"
 def group = 'software.lmao.spiritchat'
 def platform = "Paper"
-def version = '0.1.0'
+def version = '0.1.1'
 
 repositories {
     mavenCentral()
@@ -31,7 +31,7 @@ dependencies {
     compileOnly("de.exlll:configlib-yaml:4.5.0")
 
     // alumina
-    implementation("games.negative.alumina:alumina:3.1.0-SNAPSHOT")
+    implementation("games.negative.alumina:alumina:3.1.1-SNAPSHOT")
 
     // bstats
     implementation("org.bstats:bstats-bukkit:3.0.2")
