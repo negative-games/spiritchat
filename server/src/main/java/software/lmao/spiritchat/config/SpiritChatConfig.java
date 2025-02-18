@@ -66,6 +66,13 @@ public class SpiritChatConfig {
 
         @Comment({
                 "",
+                "Whether or not to use {i} and {item} to display",
+                "the item a player is holding in chat."
+        })
+        private boolean useItemDisplay = true;
+
+        @Comment({
+                "",
                 "Whether or not to use the static format for chat messages.",
         })
         private boolean useStaticFormat = true;
@@ -98,6 +105,10 @@ public class SpiritChatConfig {
                 "default", "<gray>%username%</gray> <dark_gray>></dark_gray> <white>%message%</white>",
                 "admin", "<red>[Admin]</red> <white>%username%</white> <dark_gray>></dark_gray> <red>%message%</red>"
         ));
+
+        public boolean useItemDisplay() {
+            return useItemDisplay;
+        }
 
         public boolean useStaticFormat() {
             return useStaticFormat;

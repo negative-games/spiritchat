@@ -18,6 +18,8 @@ public class Perm extends Permission {
 
     public static final Perm CHAT_COLORS = new Perm("chat-colors");
 
+    public static final Perm CHAT_ITEM = new Perm("chat-item");
+
     public Perm(@NotNull String name, @Nullable String description, @Nullable PermissionDefault defaultValue, @Nullable Map<String, Boolean> children) {
         super(PREFIX + "." + name, description, defaultValue, children);
 
