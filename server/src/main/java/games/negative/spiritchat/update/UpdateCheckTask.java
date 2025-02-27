@@ -67,7 +67,10 @@ public class UpdateCheckTask extends BukkitRunnable {
 
             String version = jsonObject.get("version").getAsString();
 
-            if (current.equals(version)) return;
+            int currentVersion = Integer.parseInt(current.replace(".", ""));
+            int latestVersion = Integer.parseInt(version.replace(".", ""));
+
+            if (currentVersion >= latestVersion) return;
 
             Tasks.run(() -> {
                 UpdateAvailableEvent event = new UpdateAvailableEvent(current, version);
