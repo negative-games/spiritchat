@@ -1,4 +1,4 @@
-package software.lmao.spiritchat;
+package games.negative.spiritchat;
 
 import com.google.common.base.Preconditions;
 import de.exlll.configlib.NameFormatters;
@@ -12,11 +12,11 @@ import net.luckperms.api.LuckPermsProvider;
 import org.bstats.bukkit.Metrics;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
-import software.lmao.spiritchat.command.CommandSpiritChat;
-import software.lmao.spiritchat.config.SpiritChatConfig;
-import software.lmao.spiritchat.config.serializer.MessageSerializer;
-import software.lmao.spiritchat.listener.PlayerChatListener;
-import software.lmao.spiritchat.update.UpdateCheckTask;
+import games.negative.spiritchat.command.CommandSpiritChat;
+import games.negative.spiritchat.config.SpiritChatConfig;
+import games.negative.spiritchat.config.serializer.MessageSerializer;
+import games.negative.spiritchat.listener.PlayerChatListener;
+import games.negative.spiritchat.update.UpdateCheckTask;
 
 import java.io.File;
 import java.util.Optional;

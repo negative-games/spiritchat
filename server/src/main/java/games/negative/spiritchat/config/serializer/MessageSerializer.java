@@ -1,4 +1,4 @@
-package software.lmao.spiritchat.config.serializer;
+package games.negative.spiritchat.config.serializer;
 
 import de.exlll.configlib.Serializer;
 import games.negative.alumina.message.Message;

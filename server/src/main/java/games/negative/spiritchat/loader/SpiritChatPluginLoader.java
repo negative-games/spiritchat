@@ -1,4 +1,4 @@
-package software.lmao.spiritchat.loader;
+package games.negative.spiritchat.loader;
 
 import com.google.common.base.Preconditions;
 import io.papermc.paper.plugin.loader.PluginClasspathBuilder;

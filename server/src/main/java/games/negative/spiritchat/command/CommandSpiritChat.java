@@ -1,11 +1,11 @@
-package software.lmao.spiritchat.command;
+package games.negative.spiritchat.command;
 
 import games.negative.alumina.command.Command;
 import games.negative.alumina.command.CommandContext;
 import games.negative.alumina.command.builder.CommandBuilder;
 import org.jetbrains.annotations.NotNull;
-import software.lmao.spiritchat.SpiritChatPlugin;
-import software.lmao.spiritchat.permission.Perm;
+import games.negative.spiritchat.SpiritChatPlugin;
+import games.negative.spiritchat.permission.Perm;
 
 public class CommandSpiritChat extends Command {
 

@@ -1,4 +1,4 @@
-package software.lmao.spiritchat.update;
+package games.negative.spiritchat.update;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -6,12 +6,11 @@ import com.google.gson.JsonObject;
 import games.negative.alumina.event.Events;
 import games.negative.alumina.message.Message;
 import games.negative.alumina.util.Tasks;
-import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
-import software.lmao.spiritchat.SpiritChatPlugin;
-import software.lmao.spiritchat.permission.Perm;
+import games.negative.spiritchat.SpiritChatPlugin;
+import games.negative.spiritchat.permission.Perm;
 
 import java.net.URI;
 import java.net.http.HttpClient;

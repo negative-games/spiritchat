@@ -1,4 +1,4 @@
-package software.lmao.spiritchat.config;
+package games.negative.spiritchat.config;
 
 import com.google.common.collect.Maps;
 import de.exlll.configlib.Comment;

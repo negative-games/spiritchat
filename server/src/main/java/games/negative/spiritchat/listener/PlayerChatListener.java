@@ -1,4 +1,4 @@
-package software.lmao.spiritchat.listener;
+package games.negative.spiritchat.listener;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -6,7 +6,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import games.negative.alumina.logger.Logs;
 import games.negative.alumina.message.Message;
-import games.negative.alumina.util.MiniMessageUtil;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.Audience;
@@ -23,9 +22,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import software.lmao.spiritchat.SpiritChatPlugin;
-import software.lmao.spiritchat.config.SpiritChatConfig;
-import software.lmao.spiritchat.permission.Perm;
+import games.negative.spiritchat.SpiritChatPlugin;
+import games.negative.spiritchat.config.SpiritChatConfig;
+import games.negative.spiritchat.permission.Perm;
 
 import java.time.Duration;
 import java.util.Comparator;

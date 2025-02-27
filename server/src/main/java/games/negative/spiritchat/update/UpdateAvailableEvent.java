@@ -1,4 +1,4 @@
-package software.lmao.spiritchat.update;
+package games.negative.spiritchat.update;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

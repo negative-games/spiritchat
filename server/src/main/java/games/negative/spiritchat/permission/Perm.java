@@ -1,4 +1,4 @@
-package software.lmao.spiritchat.permission;
+package games.negative.spiritchat.permission;
 
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.Permission;
