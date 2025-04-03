@@ -26,6 +26,7 @@ import games.negative.spiritchat.SpiritChatPlugin;
 import games.negative.spiritchat.config.SpiritChatConfig;
 import games.negative.spiritchat.permission.Perm;
 
+import javax.imageio.stream.MemoryCacheImageInputStream;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -130,6 +131,8 @@ public class PlayerChatListener implements Listener {
                     TextComponent component = LegacyComponentSerializer.legacyAmpersand().deserialize(PlainTextComponentSerializer.plainText().serialize(message));
                     builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
                 } else {
+                    String input = MiniMessage.miniMessage().escapeTags(PlainTextComponentSerializer.plainText().serialize(message));
+
                     builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
                 }
 
