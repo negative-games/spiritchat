@@ -6,6 +6,9 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import games.negative.alumina.logger.Logs;
 import games.negative.alumina.message.Message;
+import games.negative.spiritchat.SpiritChatPlugin;
+import games.negative.spiritchat.config.SpiritChatConfig;
+import games.negative.spiritchat.permission.Perm;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.Audience;
@@ -22,9 +25,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import games.negative.spiritchat.SpiritChatPlugin;
-import games.negative.spiritchat.config.SpiritChatConfig;
-import games.negative.spiritchat.permission.Perm;
 
 import java.time.Duration;
 import java.util.Comparator;
@@ -61,20 +61,7 @@ public class PlayerChatListener implements Listener {
                     .replace("%display-name%", display)
                     .replace("%username%", source.getName());
 
-            if (source.hasPermission(Perm.CHAT_COLORS)) {
-                TextComponent component = LegacyComponentSerializer.legacyAmpersand().deserialize(PlainTextComponentSerializer.plainText().serialize(message));
-                builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
-            } else {
-                builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
-            }
-
-            ItemStack item = source.getInventory().getItemInMainHand();
-            if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM) && isChatItemSyntax(message) && !item.getType().isAir()) {
-                String itemMiniMessage = createItemName(item.displayName());
-
-                builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
-                builder = builder.replace("\\{item\\}", itemMiniMessage);
-            }
+            builder = formatMessage(builder, source, message);
 
             return builder.asComponent(source);
         }
@@ -110,7 +97,7 @@ public class PlayerChatListener implements Listener {
                 });
 
         @Override
-        public Component render(@NotNull Player source, @NotNull Component display, @NotNull Component message, @NotNull Audience viewer) {
+        public @NotNull Component render(@NotNull Player source, @NotNull Component display, @NotNull Component message, @NotNull Audience viewer) {
             LuckPerms api = SpiritChatPlugin.luckperms().orElse(null);
             if (api == null) {
                 Logs.error("Could not find LuckPerms dependency on the server, yet 'use-static-format' is false!");
@@ -126,26 +113,35 @@ public class PlayerChatListener implements Listener {
                         .replace("%display-name%", display)
                         .replace("%username%", source.getName());
 
-                if (source.hasPermission(Perm.CHAT_COLORS)) {
-                    TextComponent component = LegacyComponentSerializer.legacyAmpersand().deserialize(PlainTextComponentSerializer.plainText().serialize(message));
-                    builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
-                } else {
-                    builder = builder.replace("%message%", PlainTextComponentSerializer.plainText().serialize(message));
-                }
-
-                ItemStack item = source.getInventory().getItemInMainHand();
-                if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM) && isChatItemSyntax(message) && !item.getType().isAir()) {
-                    String itemMiniMessage = createItemName(item.displayName());
-
-                    builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
-                    builder = builder.replace("\\{item\\}", itemMiniMessage);
-                }
+                builder = formatMessage(builder, source, message);
 
                 return builder.asComponent(source);
             } catch (ExecutionException e) {
                 return new StaticGlobalChatRenderer().render(source, display, message, viewer);
             }
         }
+    }
+
+    private Message.Builder formatMessage(Message.Builder builder, Player source, Component message) {
+        if (!source.hasPermission(Perm.CHAT_COLORS)) {
+            String text = PlainTextComponentSerializer.plainText().serialize(message);
+            text = MiniMessage.miniMessage().stripTags(text);
+
+            builder = builder.replace("%message%", text);
+        } else {
+            TextComponent component = LegacyComponentSerializer.legacyAmpersand().deserialize(PlainTextComponentSerializer.plainText().serialize(message));
+            builder = builder.replace("%message%", MiniMessage.miniMessage().serialize(component));
+        }
+
+        ItemStack item = source.getInventory().getItemInMainHand();
+        if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM) && isChatItemSyntax(message) && !item.getType().isAir()) {
+            String itemMiniMessage = createItemName(item.effectiveName().hoverEvent(item.asHoverEvent()));
+
+            builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
+            builder = builder.replace("\\{item\\}", itemMiniMessage);
+        }
+
+        return builder;
     }
 
     private boolean isChatItemSyntax(@NotNull Component message) {
