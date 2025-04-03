@@ -5,3 +5,4 @@ repositories:
 
 dependencies:
   - "de.exlll:configlib-yaml:4.5.0"
+  - "com.zaxxer:HikariCP:6.3.0"
