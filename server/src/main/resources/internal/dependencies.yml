@@ -6,3 +6,5 @@ repositories:
 dependencies:
   - "de.exlll:configlib-yaml:4.5.0"
   - "com.zaxxer:HikariCP:6.3.0"
+  - "org.xerial:sqlite-jdbc:3.49.1.0"
+  - "org.mariadb.jdbc:mariadb-java-client:3.5.3"

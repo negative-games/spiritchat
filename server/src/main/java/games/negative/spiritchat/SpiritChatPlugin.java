@@ -7,6 +7,9 @@ import games.negative.alumina.config.Configuration;
 import games.negative.alumina.logger.Logs;
 import games.negative.alumina.message.Message;
 import games.negative.alumina.util.Tasks;
+import games.negative.spiritchat.database.DatabaseManager;
+import games.negative.spiritchat.database.DatabaseType;
+import games.negative.spiritchat.database.type.SQLiteDatabase;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.bstats.bukkit.Metrics;
@@ -30,6 +33,8 @@ public class SpiritChatPlugin extends AluminaPlugin {
     private LuckPerms luckperms;
 
     private Metrics metrics;
+
+    private DatabaseManager dataManager;
 
     @Override
     public void load() {
@@ -55,6 +60,8 @@ public class SpiritChatPlugin extends AluminaPlugin {
 
             return builder;
         });
+
+        initializeDatabase();
     }
 
     @Override
@@ -79,6 +86,19 @@ public class SpiritChatPlugin extends AluminaPlugin {
     public void disable() {
         if (metrics != null) metrics.shutdown();
 
+    }
+
+    private void initializeDatabase() {
+        Logs.info("Initializing database...");
+        DatabaseType type = config().database().getType();
+        switch (type) {
+            case MARIA -> {
+                // not implemented!
+            }
+            default -> {
+                this.dataManager = new SQLiteDatabase(config().database());
+            }
+        }
     }
 
     public void reload() {
@@ -110,6 +130,11 @@ public class SpiritChatPlugin extends AluminaPlugin {
     }
 
     @NotNull
+    public DatabaseManager getDataManager() {
+        return dataManager;
+    }
+
+    @NotNull
     public static SpiritChatPlugin instance() {
         Preconditions.checkNotNull(instance, "SpiritChatPlugin has not been initialized yet.");
 
@@ -129,5 +154,9 @@ public class SpiritChatPlugin extends AluminaPlugin {
     @CheckReturnValue
     public static Optional<LuckPerms> luckperms() {
         return instance().getLuckPerms();
+    }
+
+    public static DatabaseManager database() {
+        return instance().getDataManager();
     }
 }

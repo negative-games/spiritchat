@@ -5,7 +5,7 @@ import de.exlll.configlib.Comment;
 import de.exlll.configlib.Configuration;
 import games.negative.alumina.message.Message;
 import games.negative.spiritchat.SpiritChatPlugin;
-import games.negative.spiritchat.loader.SpiritChatPluginLoader;
+import games.negative.spiritchat.database.DatabaseType;
 import lombok.Getter;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
@@ -79,9 +79,12 @@ public class SpiritChatConfig {
     public static class Database {
 
         @Comment({
-                "Whether or not to use an externally hosted sql database."
+                "Which type of database to use.",
+                "Options:",
+                " * SQLITE - Locally stored database",
+                " * MARIA - External database (MariaDB)",
         })
-        private boolean useExternalDatabase = false;
+        private DatabaseType type = DatabaseType.SQLITE;
 
         @Comment({
                 "",
