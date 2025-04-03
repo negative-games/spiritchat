@@ -4,6 +4,8 @@ import com.google.common.collect.Maps;
 import de.exlll.configlib.Comment;
 import de.exlll.configlib.Configuration;
 import games.negative.alumina.message.Message;
+import games.negative.spiritchat.SpiritChatPlugin;
+import games.negative.spiritchat.loader.SpiritChatPluginLoader;
 import lombok.Getter;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,12 @@ public class SpiritChatConfig {
             "is completely anonymous."
     })
     private boolean bstats = true;
+
+    @Comment({
+            "",
+            "Configuration for your external database to the plugin",
+    })
+    private Database databaseCredentials = new Database();
 
     @Comment({
             "",
@@ -59,6 +67,51 @@ public class SpiritChatConfig {
     @NotNull
     public Messages messages() {
         return messages;
+    }
+
+    @NotNull
+    public Database database() {
+        return databaseCredentials;
+    }
+
+    @Getter
+    @Configuration
+    public static class Database {
+
+        @Comment({
+                "Whether or not to use an externally hosted sql database."
+        })
+        private boolean useExternalDatabase = false;
+
+        @Comment({
+                "",
+                "The host of the database.",
+        })
+        private String host = "localhost";
+
+        @Comment({
+                "",
+                "The port of the database.",
+        })
+        private String port = "3306";
+
+        @Comment({
+                "",
+                "The name of the database.",
+        })
+        private String database = "spiritchat";
+
+        @Comment({
+                "",
+                "The username of the database.",
+        })
+        private String username = "root";
+
+        @Comment({
+                "",
+                "The password of the database.",
+        })
+        private String password = "password";
     }
 
     @Configuration
@@ -149,7 +202,9 @@ public class SpiritChatConfig {
         private Message reloaded = new Message("<b><color:#2bbce0>SpiritChat</color></b> <dark_gray>></dark_gray> <gray>Reloaded the plugin's configurations!</gray>");
 
 
-
     }
 
+    public SpiritChatConfig i() {
+        return SpiritChatPlugin.config();
+    }
 }
