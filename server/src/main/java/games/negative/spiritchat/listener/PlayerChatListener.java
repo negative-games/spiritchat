@@ -14,6 +14,7 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -135,10 +136,12 @@ public class PlayerChatListener implements Listener {
 
         ItemStack item = source.getInventory().getItemInMainHand();
         if (format().useItemDisplay() && source.hasPermission(Perm.CHAT_ITEM) && isChatItemSyntax(message) && !item.getType().isAir()) {
-            String itemMiniMessage = createItemName(item.effectiveName().hoverEvent(item.asHoverEvent()));
+            Component name = item.effectiveName().hoverEvent(item.asHoverEvent());
 
-            builder = builder.replace(Pattern.quote("{i}"), itemMiniMessage);
-            builder = builder.replace("\\{item\\}", itemMiniMessage);
+            builder = builder.replace(Pattern.quote("{i}"), "<white>%spiritchat-item%</white>");
+            builder = builder.replace("\\{item\\}", "<white>%spiritchat-item%</white>");
+
+            builder = builder.replace("%spiritchat-item%", name);
         }
 
         return builder;
