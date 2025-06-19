@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id "io.github.goooler.shadow" version "8.1.7"
+    id "xyz.jpenilla.run-paper" version "2.3.1"
 }
 
 def id = "SpiritChat"
@@ -31,7 +32,7 @@ dependencies {
     compileOnly("de.exlll:configlib-yaml:4.5.0")
 
     // alumina
-    implementation("games.negative.alumina:alumina:3.2.1-SNAPSHOT")
+    implementation("games.negative.alumina:alumina:3.5.1-SNAPSHOT")
 
     // bstats
     implementation("org.bstats:bstats-bukkit:3.0.2")
@@ -45,7 +46,6 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
 }
-
 
 def targetJavaVersion = 21
 java {
@@ -78,6 +78,10 @@ tasks {
     build {
         dependsOn(shadowJar)
     }
+    runServer {
+        minecraftVersion("1.21.4")
+    }
+
 }
 
 shadowJar {
