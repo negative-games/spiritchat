@@ -81,7 +81,7 @@ tasks {
 }
 
 shadowJar {
-    archiveBaseName.set("${id}-${platform}-${version}")
+    archiveBaseName.set("${id}-${platform}")
     archiveClassifier.set("")
     archiveVersion.set("")
     destinationDirectory.set(file("${parent.projectDir}/build/libs"))
