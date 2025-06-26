@@ -25,6 +25,8 @@ public class SpiritChatPluginLoader implements PluginLoader {
     public void classloader(PluginClasspathBuilder builder) {
         MavenLibraryResolver resolver = new MavenLibraryResolver();
 
+        resolver.addRepository(new RemoteRepository.Builder("central", "default", getDefaultMavenCentralMirror()).build());
+
         try (InputStream input = getClass().getResourceAsStream("/internal/dependencies.yml")) {
             Preconditions.checkNotNull(input, "Could not find internal/dependencies.yml");
 
@@ -67,5 +69,20 @@ public class SpiritChatPluginLoader implements PluginLoader {
 
             return new YamlRepository(id, url);
         }
+    }
+
+    /**
+     * Backported from <a href="https://github.com/PaperMC/Paper/commit/62b7f86dae659deb2fc450285452d7c1439f92dc">...</a>
+     * @return the default Maven Central mirror URL
+     */
+    private static String getDefaultMavenCentralMirror() {
+        String central = System.getenv("PAPER_DEFAULT_CENTRAL_REPOSITORY");
+        if (central == null) {
+            central = System.getProperty("org.bukkit.plugin.java.LibraryLoader.centralURL");
+        }
+        if (central == null) {
+            central = "https://maven-central.storage-download.googleapis.com/maven2";
+        }
+        return central;
     }
 }
