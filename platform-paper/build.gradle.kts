@@ -32,6 +32,8 @@ dependencies {
 
     implementation("games.negative.alumina:alumina:3.7.1-SNAPSHOT")
 
+    compileOnly("net.luckperms:api:5.4")
+
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
 }
@@ -71,6 +73,10 @@ configure<PaperPluginDescription> {
 
     serverDependencies {
         register("PlaceholderAPI") {
+            load = PaperPluginDescription.RelativeLoadOrder.BEFORE
+            required = false
+        }
+        register("LuckPerms") {
             load = PaperPluginDescription.RelativeLoadOrder.BEFORE
             required = false
         }

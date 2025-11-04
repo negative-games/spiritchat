@@ -4,7 +4,10 @@ import de.exlll.configlib.NameFormatters;
 import games.negative.alumina.AluminaPlugin;
 import games.negative.alumina.config.Configuration;
 import games.negative.chat.config.Config;
+import games.negative.chat.util.LPUtil;
+import io.vavr.control.Option;
 import lombok.Getter;
+import net.luckperms.api.LuckPerms;
 
 import java.io.File;
 
@@ -12,6 +15,9 @@ public class SpiritChatPlugin extends AluminaPlugin {
 
     @Getter
     private static SpiritChatPlugin instance;
+
+    @Getter
+    private static LuckPerms luckPerms;
 
     private Configuration<Config> configuration;
 
@@ -47,11 +53,19 @@ public class SpiritChatPlugin extends AluminaPlugin {
 
     @Override
     public void enable() {
-
+        luckPerms = LPUtil.loadLuckPerms();
     }
 
     @Override
     public void disable() {
 
+    }
+
+    public static Option<LuckPerms> luckperms() {
+        return Option.of(luckPerms);
+    }
+
+    public static Config config() {
+        return getInstance().configuration.get();
     }
 }
