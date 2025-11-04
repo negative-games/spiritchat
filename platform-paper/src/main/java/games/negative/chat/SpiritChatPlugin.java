@@ -4,13 +4,18 @@ import de.exlll.configlib.NameFormatters;
 import games.negative.alumina.AluminaPlugin;
 import games.negative.alumina.config.Configuration;
 import games.negative.chat.config.Config;
+import games.negative.chat.config.section.chat.StaticChatSettings;
+import games.negative.chat.controller.ChatController;
+import games.negative.chat.controller.format.StaticChatController;
 import games.negative.chat.util.LPUtil;
 import io.vavr.control.Option;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.luckperms.api.LuckPerms;
 
 import java.io.File;
 
+@Slf4j
 public class SpiritChatPlugin extends AluminaPlugin {
 
     @Getter
@@ -54,11 +59,34 @@ public class SpiritChatPlugin extends AluminaPlugin {
     @Override
     public void enable() {
         luckPerms = LPUtil.loadLuckPerms();
+
+        reloadConfigs();
+
+        registerListener(new ChatController());
     }
 
     @Override
     public void disable() {
 
+    }
+
+    public void reloadConfigs() {
+        this.configuration.reload();
+        initGlobalChatRenderer();
+    }
+
+    private void initGlobalChatRenderer() {
+        Config config = config();
+
+        StaticChatSettings staticChatSettings = config.getStaticChatSettings();
+        if (staticChatSettings.isEnabled()) {
+            ChatController.setGlobalRenderer(new StaticChatController(staticChatSettings));
+            log.info("Successfully initialized Static Chat Renderer.");
+            return;
+        }
+
+        ChatController.setGlobalRenderer(null);
+        log.error("Could not initialize a Chat Renderer. Global chat messages will not be formatted.");
     }
 
     public static Option<LuckPerms> luckperms() {
