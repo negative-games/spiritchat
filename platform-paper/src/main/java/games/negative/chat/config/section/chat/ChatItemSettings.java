@@ -21,6 +21,15 @@ public class ChatItemSettings {
 
     @Comment({
             "",
+            "The permission required to use chat item formatting.",
+            "Players without this permission will not have their held item displayed in chat messages.",
+            " ",
+            "Default: spiritchat.chatitem"
+    })
+    private String permission = "spiritchat.chatitem";
+
+    @Comment({
+            "",
             "Placeholders that will be replaced with the item name in chat messages.",
             "You can add multiple placeholders if you want.",
             " ",

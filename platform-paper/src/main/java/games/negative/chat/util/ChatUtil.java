@@ -41,7 +41,9 @@ public final class ChatUtil {
 
     public void formatChatItemMessage(Player player, String input, Message.Builder builder) {
         ChatItemSettings settings = SpiritChatPlugin.config().getChatItemSettings();
-        if (!settings.isEnabled() || !settings.containsChatItemSyntax(input)) return;
+        if (!settings.isEnabled()
+                || !settings.containsChatItemSyntax(input)
+                || !player.hasPermission(settings.getPermission())) return;
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (settings.isItemTypeBlocked(item.getType())) return;
