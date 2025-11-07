@@ -3,6 +3,7 @@ package games.negative.chat;
 import de.exlll.configlib.NameFormatters;
 import games.negative.alumina.AluminaPlugin;
 import games.negative.alumina.config.Configuration;
+import games.negative.chat.command.CommandSpiritChat;
 import games.negative.chat.config.Config;
 import games.negative.chat.config.section.chat.StaticChatSettings;
 import games.negative.chat.controller.ChatController;
@@ -63,6 +64,8 @@ public class SpiritChatPlugin extends AluminaPlugin {
         reloadConfigs();
 
         registerListener(new ChatController());
+
+        registerCommand(new CommandSpiritChat());
     }
 
     @Override

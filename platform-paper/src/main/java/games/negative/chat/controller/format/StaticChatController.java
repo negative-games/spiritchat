@@ -12,12 +12,6 @@ public record StaticChatController(StaticChatSettings settings) implements ChatR
 
     @Override
     public @NotNull Component render(@NotNull Player source, @NotNull Component sourceDisplayName, @NotNull Component message, @NotNull Audience viewer) {
-        String displayName = ChatUtil.MINIMESSAGE.serialize(sourceDisplayName);
-        String input = ChatUtil.formatMessage(source, message);
-
-        final String format = settings.getFormat().replace("%player%", displayName)
-                .replace("%message%", input);
-
-        return ChatUtil.MINIMESSAGE.deserialize(format);
+        return ChatUtil.applyFormat(source.getPlayer(), settings.format(), message);
     }
 }

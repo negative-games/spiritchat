@@ -2,6 +2,7 @@ package games.negative.chat.config.section.chat;
 
 import de.exlll.configlib.Comment;
 import de.exlll.configlib.Configuration;
+import games.negative.alumina.message.Message;
 import lombok.Getter;
 
 @Getter
@@ -24,8 +25,11 @@ public class StaticChatSettings {
             "You can use the following placeholders:",
             "  %message% - The message sent by the player.",
             " ",
-            "Default: \"%player%&8:&r %message%\""
+            "Default: \"{player}&8:&r {message}\""
     })
     private String format = "%player%&8:&r %message%";
 
+    public Message format() {
+        return Message.of(format);
+    }
 }
