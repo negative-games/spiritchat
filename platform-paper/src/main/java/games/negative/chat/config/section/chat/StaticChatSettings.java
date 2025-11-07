@@ -10,11 +10,10 @@ import lombok.Getter;
 public class StaticChatSettings {
 
     @Comment({
-            "",
             "Whether or not to use static chat formatting.",
             "If enabled, all players will see the same chat format regardless of permissions or other factors",
             "This is useful for servers that want a consistent chat experience for all players.",
-            "",
+            " ",
             "Default: true"
     })
     private boolean enabled = true;

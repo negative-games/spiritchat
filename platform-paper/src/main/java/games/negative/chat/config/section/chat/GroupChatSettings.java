@@ -16,11 +16,10 @@ import java.util.Optional;
 public class GroupChatSettings {
 
     @Comment({
-            "",
             "Whether or not to use group chat formatting.",
             "If enabled, chat format will be determined by the player's group.",
             "This is useful for servers that want to differentiate chat formats based on player groups.",
-            "",
+            " ",
             "Default: false"
     })
     private boolean enabled = false;
@@ -32,7 +31,9 @@ public class GroupChatSettings {
             "  {player} - The name of the player sending the message.",
             "  {message} - The message sent by the player.",
             " ",
-            "Default: {","\"default\": \"{player}&8:&r {message}\", \"admin\": \"&4[Admin] {player}&8:&r {message}\"","}"
+            "Default:",
+            " default: \"{player}&8:&r {message}\"",
+            " admin: \"&4[Admin] {player}&8:&r {message}\""
     })
     private Map<String, String> formats = Map.of(
             "default", "{player}&8:&r {message}",
@@ -40,6 +41,6 @@ public class GroupChatSettings {
     );
 
     public Option<Message> format(String group) {
-        return Option.of(group).filter(Objects::nonNull).map(Message::of);
+        return Option.of(formats.get(group)).filter(Objects::nonNull).map(Message::of);
     }
 }
