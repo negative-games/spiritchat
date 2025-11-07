@@ -5,8 +5,10 @@ import games.negative.alumina.AluminaPlugin;
 import games.negative.alumina.config.Configuration;
 import games.negative.chat.command.CommandSpiritChat;
 import games.negative.chat.config.Config;
+import games.negative.chat.config.section.chat.GroupChatSettings;
 import games.negative.chat.config.section.chat.StaticChatSettings;
 import games.negative.chat.controller.ChatController;
+import games.negative.chat.controller.format.GroupChatController;
 import games.negative.chat.controller.format.StaticChatController;
 import games.negative.chat.util.LPUtil;
 import io.vavr.control.Option;
@@ -88,6 +90,19 @@ public class SpiritChatPlugin extends AluminaPlugin {
         if (staticChatSettings.isEnabled()) {
             ChatController.setGlobalRenderer(new StaticChatController(staticChatSettings));
             log.info("Successfully initialized Static Chat Renderer.");
+            return;
+        }
+
+        GroupChatSettings groupChatSettings = config.getGroupChatSettings();
+        if (groupChatSettings.isEnabled()) {
+            if (luckperms().isEmpty()) {
+                log.error("LuckPerms not found! Cannot initialize Group Chat Renderer.");
+                ChatController.setGlobalRenderer(null);
+                return;
+            }
+
+            ChatController.setGlobalRenderer(new GroupChatController(groupChatSettings));
+            log.info("Successfully initialized Group Chat Renderer.");
             return;
         }
 

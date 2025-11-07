@@ -3,6 +3,7 @@ package games.negative.chat.config;
 import de.exlll.configlib.Comment;
 import de.exlll.configlib.Configuration;
 import games.negative.chat.config.section.chat.ChatItemSettings;
+import games.negative.chat.config.section.chat.GroupChatSettings;
 import games.negative.chat.config.section.chat.StaticChatSettings;
 import games.negative.chat.config.section.database.DatabaseSettings;
 import games.negative.chat.config.section.display.PlayerDisplaySettings;
@@ -35,6 +36,12 @@ public class Config {
             "Settings for static chat formatting"
     })
     private StaticChatSettings staticChatSettings = new StaticChatSettings();
+
+    @Comment({
+            "",
+            "Settings for group chat formatting"
+    })
+    private GroupChatSettings groupChatSettings = new GroupChatSettings();
 
     @Comment({
             "",

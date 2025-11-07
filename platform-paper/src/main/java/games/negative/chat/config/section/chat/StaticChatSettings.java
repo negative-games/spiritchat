@@ -23,7 +23,8 @@ public class StaticChatSettings {
             "",
             "The static chat format to use if static chat is enabled.",
             "You can use the following placeholders:",
-            "  %message% - The message sent by the player.",
+            "  {player} - The name of the player sending the message.",
+            "  {message} - The message sent by the player.",
             " ",
             "Default: \"{player}&8:&r {message}\""
     })
