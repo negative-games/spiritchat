@@ -8,7 +8,7 @@ plugins {
     id("net.minecrell.plugin-yml.paper") version "0.6.0"
 }
 
-val location = "games.negative.spiritchat"
+val location = "games.negative.chat"
 version = "1.0-SNAPSHOT"
 
 repositories {

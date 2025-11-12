@@ -43,10 +43,7 @@ public record GroupChatController(GroupChatSettings settings) implements ChatRen
     @Override
     public @NotNull Component render(@NotNull Player source, @NotNull Component sourceDisplayName, @NotNull Component message, @NotNull Audience viewer) {
         Message format = cache.get(source.getUniqueId());
-        if (format == null) {
-            log.error("Could not find group format for player {}", source.getName());
-            return ChatRenderer.defaultRenderer().render(source, sourceDisplayName, message, viewer);
-        }
+        if (format == null) return ChatRenderer.defaultRenderer().render(source, sourceDisplayName, message, viewer);
 
         return ChatUtil.applyFormat(source, format, message);
     }

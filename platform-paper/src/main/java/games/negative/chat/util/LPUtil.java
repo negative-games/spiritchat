@@ -39,7 +39,7 @@ public final class LPUtil {
         LuckPerms api = SpiritChatPlugin.luckperms().getOrNull();
 
         User user = api.getUserManager().getUser(uuid);
-        if (user == null) throw new Exception("Could not find user with UUID %s".formatted(user));
+        if (user == null) throw new Exception("Could not find user with UUID %s".formatted(uuid));
 
         return user.getInheritedGroups(user.getQueryOptions()).stream()
                 .sorted(Comparator.comparingInt(value -> ((Group) value).getWeight().orElse(0)).reversed())
