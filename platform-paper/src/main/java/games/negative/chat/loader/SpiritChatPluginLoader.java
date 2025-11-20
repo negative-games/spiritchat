@@ -15,8 +15,12 @@ public class SpiritChatPluginLoader implements PluginLoader {
 
         resolver.addRepository(new RemoteRepository.Builder("central", "default", getDefaultMavenCentralMirror()).build());
 
+        resolver.addDependency(dependency("org.springframework:spring-context:6.2.13"));
+
         resolver.addDependency(dependency("de.exlll:configlib-yaml:4.6.3"));
+
         resolver.addDependency(dependency("io.vavr:vavr:0.10.7"));
+
         resolver.addDependency(dependency("com.github.ben-manes.caffeine:caffeine:3.2.3"));
 
         builder.addLibrary(resolver);

@@ -4,8 +4,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import games.negative.alumina.message.Message;
 import games.negative.chat.config.section.chat.GroupChatSettings;
-import games.negative.chat.util.ChatUtil;
-import games.negative.chat.util.LPUtil;
+import games.negative.chat.controller.ChatController;
+import games.negative.chat.service.LuckPermsService;
 import io.papermc.paper.chat.ChatRenderer;
 import io.vavr.control.Option;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import java.util.UUID;
 
 @Slf4j
-public record GroupChatController(GroupChatSettings settings) implements ChatRenderer {
+public record GroupChatController(ChatController controller, GroupChatSettings settings, LuckPermsService luckPermsService) implements ChatRenderer {
 
     private static LoadingCache<@NotNull UUID, Message> cache;
 
@@ -28,7 +28,7 @@ public record GroupChatController(GroupChatSettings settings) implements ChatRen
          cache = Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofSeconds(10))
                 .build(key -> {
-                    LinkedList<Group> groups = LPUtil.loadGroups(key);
+                    LinkedList<Group> groups = luckPermsService.loadGroups(key);
 
                     for (Group group : groups) {
                         Option<Message> format = settings.format(group.getName());
@@ -45,6 +45,6 @@ public record GroupChatController(GroupChatSettings settings) implements ChatRen
         Message format = cache.get(source.getUniqueId());
         if (format == null) return ChatRenderer.defaultRenderer().render(source, sourceDisplayName, message, viewer);
 
-        return ChatUtil.applyFormat(source, format, message);
+        return controller.applyFormat(source, format, message);
     }
 }
