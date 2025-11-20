@@ -9,19 +9,18 @@ import games.negative.chat.spring.Loadable;
 import games.negative.chat.spring.Reloadable;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.event.Listener;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @Slf4j
 public class SpiritChatPlugin extends AluminaPlugin {
 
     private AnnotationConfigApplicationContext context;
-
-    private final List<Disableable> disableables = new ArrayList<>();
-    private final List<Reloadable> reloadables  = new ArrayList<>();
 
     @Override
     public void load() {
@@ -35,25 +34,37 @@ public class SpiritChatPlugin extends AluminaPlugin {
 
         context.refresh();
 
-        invokeLoadables();
+        invokeBeans(Loadable.class, loadable -> loadable.onLoad(context), (loadable, e) -> {
+            log.error("Failed to load {}", loadable.getClass().getSimpleName(), e);
+        });
     }
 
     @Override
     public void enable() {
-        setupReloadables();
-        setupDisableables();
+        // Register enableables
+        invokeBeans(Enableable.class, Enableable::onEnable, (enableable, e) -> {
+            log.error("An error occurred while enabling {}", enableable.getClass().getSimpleName(), e);
+        });
 
-        invokeEnableables();
-
+        // Initial reload
         reload();
 
-        invokeListeners();
-        invokeCommands();
+        // Register listeners
+        invokeBeans(Listener.class, Events::listen, (listener, e) -> {
+            log.error("Failed to register listener {}", listener.getClass().getSimpleName(), e);
+        });
+
+        // Register commands
+        invokeBeans(Command.class, this::registerCommand, (command, e) -> {
+            log.error("Failed to register command {}", command.getClass().getSimpleName(), e);
+        });
     }
 
     @Override
     public void disable() {
-        invokeDisableables();
+        invokeBeans(Disableable.class, Disableable::onDisable, (disableable, e) -> {
+            log.error("An error occurred while disabling {}", disableable.getClass().getSimpleName(), e);
+        });
 
         if (context != null) {
             context.close();
@@ -62,82 +73,39 @@ public class SpiritChatPlugin extends AluminaPlugin {
     }
 
     public void reload() {
-        invokeReloadables();
+        invokeBeans(Reloadable.class, Reloadable::onReload, (reloadable, e) -> {
+            log.error("An error occurred while reloading {}", reloadable.getClass().getSimpleName(), e);
+        });
     }
 
-    private void invokeLoadables() {
-        String[] loadableBeans = context.getBeanNamesForType(Loadable.class);
-        for (String beanName : loadableBeans) {
-            Loadable loadable = context.getBean(beanName, Loadable.class);
+    /**
+     * Invoke all beans of a certain class type with a consumer.
+     * @param clazz the class type of the beans to invoke
+     * @param consumer the consumer to invoke on each bean
+     * @param onFailure the failure consumer to invoke if an exception occurs
+     * @param <T> the type of the beans
+     */
+    private <T> void invokeBeans(@NotNull Class<T> clazz, @NotNull Consumer<T> consumer, @Nullable BiConsumer<T, Exception> onFailure) {
+        Collection<T> beans = context.getBeansOfType(clazz).values();
+        for (T bean : beans) {
             try {
-                loadable.onLoad(context);
+                consumer.accept(bean);
             } catch (Exception e) {
-                log.error("Failed to load {}", loadable.getClass().getSimpleName(), e);
+                if (onFailure == null) return;
+
+                onFailure.accept(bean, e);
             }
         }
     }
 
-    private void invokeEnableables() {
-        for (Enableable enableable : context.getBeansOfType(Enableable.class).values()) {
-            try {
-                enableable.onEnable();
-            } catch (Exception e) {
-                log.error("An error occurred while enabling {}", enableable.getClass().getSimpleName(), e);
-            }
-        }
-    }
-
-    private void setupDisableables() {
-        disableables.clear();
-        disableables.addAll(context.getBeansOfType(Disableable.class).values());
-    }
-
-    private void invokeDisableables() {
-        for (Disableable disableable : disableables) {
-            try {
-                disableable.onDisable();
-            } catch (Exception e) {
-                log.error("An error occurred while disabling {}",
-                        disableable.getClass().getSimpleName(), e);
-            }
-        }
-    }
-
-    private void setupReloadables() {
-        reloadables.clear();
-        reloadables.addAll(context.getBeansOfType(Reloadable.class).values());
-    }
-
-    private void invokeReloadables() {
-        for (Reloadable reloadable : reloadables) {
-            try {
-                reloadable.onReload();
-            } catch (Exception e) {
-                log.error("An error occurred while reloading {}", reloadable.getClass().getSimpleName(), e);
-            }
-        }
-    }
-
-    private void invokeListeners() {
-        Collection<Listener> listeners = context.getBeansOfType(Listener.class).values();
-        for (Listener listener : listeners) {
-            try {
-                Events.listen(listener);
-            } catch (Exception e) {
-                log.error("Failed to register listener {}", listener.getClass().getName(), e);
-            }
-        }
-    }
-
-    private void invokeCommands() {
-        Collection<Command> commands = context.getBeansOfType(Command.class).values();
-        for (Command command : commands) {
-            try {
-                registerCommand(command);
-            } catch (Exception e) {
-                log.error("Failed to register command {}", command.getClass().getName(), e);
-            }
-        }
+    /**
+     * Invoke all beans of a certain class type with a consumer.
+     * @param clazz the class type of the beans to invoke
+     * @param consumer the consumer to invoke on each bean
+     * @param <T> the type of the beans
+     */
+    private <T> void invokeBeans(@NotNull Class<T> clazz, @NotNull Consumer<T> consumer) {
+        invokeBeans(clazz, consumer, null);
     }
 
     protected String basePackage() {
