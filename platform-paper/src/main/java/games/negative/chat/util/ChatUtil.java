@@ -27,47 +27,6 @@ public final class ChatUtil {
             .hexColors()
             .build();
 
-    public Component applyFormat(Player player, Message format, Component original) {
-        String input = formatMessage(player, original);
-
-        Message.Builder builder = format.create(MINIMESSAGE);
-        builder.replace(Pattern.quote("{player}"), player.getName());
-        builder.replace(Pattern.quote("{message}"), input);
-
-        formatChatItemMessage(player, input, builder);
-
-        return builder.asComponent(player);
-    }
-
-    public void formatChatItemMessage(Player player, String input, Message.Builder builder) {
-        ChatItemSettings settings = SpiritChatPlugin.config().getChatItemSettings();
-        if (!settings.isEnabled()
-                || !settings.containsChatItemSyntax(input)
-                || !player.hasPermission(settings.getPermission())) return;
-
-        ItemStack item = player.getInventory().getItemInMainHand();
-        if (settings.isItemTypeBlocked(item.getType())) return;
-
-        for (String placeholder : settings.getPlaceholders()) {
-            builder.replace(Pattern.quote(placeholder), "<white>%spiritchat-item%</white>");
-        }
-
-        Component name = item.effectiveName().hoverEvent(item.asHoverEvent());
-        builder.replace("%spiritchat-item%", name);
-    }
-
-    public String formatMessage(Player player, Component message) {
-        String text;
-        if (!player.hasPermission("spiritchat.chat-colors")) {
-            text = MINIMESSAGE.escapeTags(PLAIN_SERIALIZER.serialize(message));
-        } else {
-            Component component = LEGACY_SERIALIZER.deserialize(PLAIN_SERIALIZER.serialize(message));
-            text = MINIMESSAGE.serialize(component);
-        }
-
-        return text;
-    }
-
     public void setMiniMessage(MiniMessage miniMessage) {
         MINIMESSAGE = miniMessage;
     }

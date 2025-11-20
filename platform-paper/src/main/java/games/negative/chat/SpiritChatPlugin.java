@@ -1,120 +1,147 @@
 package games.negative.chat;
 
-import de.exlll.configlib.NameFormatters;
 import games.negative.alumina.AluminaPlugin;
-import games.negative.alumina.config.Configuration;
-import games.negative.chat.command.CommandSpiritChat;
-import games.negative.chat.config.Config;
-import games.negative.chat.config.section.chat.GroupChatSettings;
-import games.negative.chat.config.section.chat.StaticChatSettings;
-import games.negative.chat.controller.ChatController;
-import games.negative.chat.controller.format.GroupChatController;
-import games.negative.chat.controller.format.StaticChatController;
-import games.negative.chat.util.LPUtil;
-import io.vavr.control.Option;
-import lombok.Getter;
+import games.negative.alumina.command.Command;
+import games.negative.alumina.event.Events;
+import games.negative.chat.spring.Disableable;
+import games.negative.chat.spring.Enableable;
+import games.negative.chat.spring.Loadable;
+import games.negative.chat.spring.Reloadable;
 import lombok.extern.slf4j.Slf4j;
-import net.luckperms.api.LuckPerms;
+import org.bukkit.event.Listener;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 public class SpiritChatPlugin extends AluminaPlugin {
 
-    @Getter
-    private static SpiritChatPlugin instance;
+    private AnnotationConfigApplicationContext context;
 
-    @Getter
-    private static LuckPerms luckPerms;
-
-    private Configuration<Config> configuration;
+    private final List<Disableable> disableables = new ArrayList<>();
+    private final List<Reloadable> reloadables  = new ArrayList<>();
 
     @Override
     public void load() {
-        instance = this;
+        context = new AnnotationConfigApplicationContext();
 
-        this.configuration = Configuration.config(new File(getDataFolder(), "config.yml"), Config.class, builder -> {
-            builder.setNameFormatter(NameFormatters.LOWER_KEBAB_CASE);
+        context.setClassLoader(getClassLoader());
 
-            builder.inputNulls(true);
-            builder.outputNulls(false);
+        context.registerBean(SpiritChatPlugin.class, () -> this);
 
-            builder.header("""
-           ------------------------------------------------------------------------------------------ \s
-                       _____           _          _   _         _____   _               _  \s
-                      / ____|         (_)        (_) | |       / ____| | |             | | \s
-                     | (___    _ __    _   _ __   _  | |_     | |      | |__     __ _  | |_\s
-                      \\___ \\  | '_ \\  | | | '__| | | | __|    | |      | '_ \\   / _` | | __|
-                      ____) | | |_) | | | | |    | | | |_     | |____  | | | | | (_| | | |_\s
-                     |_____/  | .__/  |_| |_|    |_|  \\__|     \\_____| |_| |_|  \\__,_|  \\__|
-                              | |                                                          \s
-                              |_|                                                          \s
-                             \s
-            Documentation: https://docs.negative.games/spiritchat                            \s
-            MiniMessage Documentation: https://webui.advntr.dev/           \s
-           ------------------------------------------------------------------------------------------""");
+        context.scan(basePackage());
 
-            builder.footer("""
-                    Author: ericlmao
-                    """);
+        context.refresh();
 
-            return builder;
-        });
+        invokeLoadables();
     }
 
     @Override
     public void enable() {
-        luckPerms = LPUtil.loadLuckPerms();
+        setupReloadables();
+        setupDisableables();
 
-        reloadConfigs();
+        invokeEnableables();
 
-        registerListener(new ChatController());
+        reload();
 
-        registerCommand(new CommandSpiritChat());
+        invokeListeners();
+        invokeCommands();
     }
 
     @Override
     public void disable() {
+        invokeDisableables();
 
-    }
-
-    public void reloadConfigs() {
-        this.configuration.reload();
-        initGlobalChatRenderer();
-    }
-
-    private void initGlobalChatRenderer() {
-        Config config = config();
-
-        StaticChatSettings staticChatSettings = config.getStaticChatSettings();
-        if (staticChatSettings.isEnabled()) {
-            ChatController.setGlobalRenderer(new StaticChatController(staticChatSettings));
-            log.info("Successfully initialized Static Chat Renderer.");
-            return;
+        if (context != null) {
+            context.close();
+            context = null;
         }
+    }
 
-        GroupChatSettings groupChatSettings = config.getGroupChatSettings();
-        if (groupChatSettings.isEnabled()) {
-            if (luckperms().isEmpty()) {
-                log.error("LuckPerms not found! Cannot initialize Group Chat Renderer.");
-                ChatController.setGlobalRenderer(null);
-                return;
+    public void reload() {
+        invokeReloadables();
+    }
+
+    private void invokeLoadables() {
+        String[] loadableBeans = context.getBeanNamesForType(Loadable.class);
+        for (String beanName : loadableBeans) {
+            Loadable loadable = context.getBean(beanName, Loadable.class);
+            try {
+                loadable.onLoad(context);
+            } catch (Exception e) {
+                log.error("Failed to load {}", loadable.getClass().getSimpleName(), e);
             }
-
-            ChatController.setGlobalRenderer(new GroupChatController(groupChatSettings));
-            log.info("Successfully initialized Group Chat Renderer.");
-            return;
         }
-
-        ChatController.setGlobalRenderer(null);
-        log.error("Could not initialize a Chat Renderer. Global chat messages will not be formatted.");
     }
 
-    public static Option<LuckPerms> luckperms() {
-        return Option.of(luckPerms);
+    private void invokeEnableables() {
+        for (Enableable enableable : context.getBeansOfType(Enableable.class).values()) {
+            try {
+                enableable.onEnable();
+            } catch (Exception e) {
+                log.error("An error occurred while enabling {}", enableable.getClass().getSimpleName(), e);
+            }
+        }
     }
 
-    public static Config config() {
-        return getInstance().configuration.get();
+    private void setupDisableables() {
+        disableables.clear();
+        disableables.addAll(context.getBeansOfType(Disableable.class).values());
+    }
+
+    private void invokeDisableables() {
+        for (Disableable disableable : disableables) {
+            try {
+                disableable.onDisable();
+            } catch (Exception e) {
+                log.error("An error occurred while disabling {}",
+                        disableable.getClass().getSimpleName(), e);
+            }
+        }
+    }
+
+    private void setupReloadables() {
+        reloadables.clear();
+        reloadables.addAll(context.getBeansOfType(Reloadable.class).values());
+    }
+
+    private void invokeReloadables() {
+        for (Reloadable reloadable : reloadables) {
+            try {
+                reloadable.onReload();
+            } catch (Exception e) {
+                log.error("An error occurred while reloading {}", reloadable.getClass().getSimpleName(), e);
+            }
+        }
+    }
+
+    private void invokeListeners() {
+        Collection<Listener> listeners = context.getBeansOfType(Listener.class).values();
+        for (Listener listener : listeners) {
+            try {
+                Events.listen(listener);
+            } catch (Exception e) {
+                log.error("Failed to register listener {}", listener.getClass().getName(), e);
+            }
+        }
+    }
+
+    private void invokeCommands() {
+        Collection<Command> commands = context.getBeansOfType(Command.class).values();
+        for (Command command : commands) {
+            try {
+                registerCommand(command);
+            } catch (Exception e) {
+                log.error("Failed to register command {}", command.getClass().getName(), e);
+            }
+        }
+    }
+
+    protected String basePackage() {
+        return this.getClass().getPackageName();
     }
 }
+

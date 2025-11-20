@@ -22,6 +22,10 @@ repositories {
 }
 
 dependencies {
+
+    // https://mvnrepository.com/artifact/org.springframework/spring-context
+    compileOnly("org.springframework:spring-context:6.2.13")
+
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
 
     compileOnly("io.vavr:vavr:0.10.7")
@@ -55,7 +59,7 @@ java {
 tasks.shadowJar {
     archiveBaseName.set(rootProject.name + "-Paper")
     archiveClassifier.set("")
-    archiveVersion.set(indraGit.commit()?.name?.take(7) ?: "unknown")
+    archiveVersion.set("")
 
     destinationDirectory.set(rootProject.rootDir.resolve("build"))
 
