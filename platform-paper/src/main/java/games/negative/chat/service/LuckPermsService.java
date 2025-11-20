@@ -16,17 +16,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @SpringComponent
-public class LuckPermsService implements Enableable {
+public class LuckPermsService implements Enableable{
 
-    private LuckPerms luckPerms;
-
-    @Override
-    public void onEnable() {
-        luckPerms = LPUtil.loadLuckPerms();
-    }
+    private Option<LuckPerms> luckPerms;
 
     public Option<LuckPerms> luckPerms() {
-        return Option.of(luckPerms);
+        return luckPerms;
     }
 
     public LinkedList<Group> loadGroups(@NotNull UUID uuid) throws Exception {
@@ -38,5 +33,10 @@ public class LuckPermsService implements Enableable {
         return user.getInheritedGroups(user.getQueryOptions()).stream()
                 .sorted(Comparator.comparingInt(value -> ((Group) value).getWeight().orElse(0)).reversed())
                 .collect(Collectors.toCollection(Lists::newLinkedList));
+    }
+
+    @Override
+    public void onEnable() {
+        luckPerms = Option.of(LPUtil.loadLuckPerms());
     }
 }

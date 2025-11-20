@@ -19,7 +19,7 @@ public final class LPUtil {
             log.info("Successfully loaded LuckPerms integration!");
             return LuckPermsProvider.get();
         } catch (Exception e) {
-            log.warn("LuckPerms plugin not found, features using LuckPerms will not work!", e);
+            log.warn("LuckPerms plugin not found, features using LuckPerms will not work!");
             return null;
         }
     }
