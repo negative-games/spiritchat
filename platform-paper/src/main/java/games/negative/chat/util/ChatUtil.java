@@ -1,17 +1,9 @@
 package games.negative.chat.util;
 
-import games.negative.alumina.message.Message;
-import games.negative.chat.SpiritChatPlugin;
-import games.negative.chat.config.section.chat.ChatItemSettings;
 import lombok.experimental.UtilityClass;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-
-import java.util.regex.Pattern;
 
 @UtilityClass
 public final class ChatUtil {
