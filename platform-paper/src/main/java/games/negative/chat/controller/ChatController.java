@@ -77,7 +77,7 @@ public class ChatController implements Listener, Reloadable {
     public String formatMessage(Player player, Component message) {
         String text;
         if (!player.hasPermission("spiritchat.chat-colors")) {
-            text = ChatUtil.MINIMESSAGE.escapeTags(ChatUtil.PLAIN_SERIALIZER.serialize(message));
+            text = ChatUtil.MINIMESSAGE.stripTags(ChatUtil.PLAIN_SERIALIZER.serialize(message));
         } else {
             Component component = ChatUtil.LEGACY_SERIALIZER.deserialize(ChatUtil.PLAIN_SERIALIZER.serialize(message));
             text = ChatUtil.MINIMESSAGE.serialize(component);
