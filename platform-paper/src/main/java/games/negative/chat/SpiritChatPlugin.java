@@ -7,8 +7,10 @@ import games.negative.chat.spring.Disableable;
 import games.negative.chat.spring.Enableable;
 import games.negative.chat.spring.Loadable;
 import games.negative.chat.spring.Reloadable;
+import games.negative.chat.temp.SkyIslandsGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.event.Listener;
+import org.bukkit.generator.ChunkGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -110,6 +112,11 @@ public class SpiritChatPlugin extends AluminaPlugin {
 
     protected String basePackage() {
         return this.getClass().getPackageName();
+    }
+
+    @Override
+    public @org.jspecify.annotations.Nullable ChunkGenerator getDefaultWorldGenerator(String worldName, @org.jspecify.annotations.Nullable String id) {
+        return new SkyIslandsGenerator();
     }
 }
 

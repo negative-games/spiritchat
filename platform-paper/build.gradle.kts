@@ -72,7 +72,7 @@ configure<PaperPluginDescription> {
     apiVersion = "1.20"
     version = indraGit.commit()?.name?.take(7) ?: "unknown"
     main = "games.negative.chat.SpiritChatPlugin"
-    load = BukkitPluginDescription.PluginLoadOrder.POSTWORLD
+    load = BukkitPluginDescription.PluginLoadOrder.STARTUP
     loader = "games.negative.chat.loader.SpiritChatPluginLoader"
 
     serverDependencies {
