@@ -16,7 +16,7 @@ repositories {
 
     maven("https://repo.papermc.io/repository/maven-public/")
 
-    maven("https://repo.negative.games/repository/maven-snapshots/")
+    maven("https://repo.moonrise.gg/repository/maven-snapshots/")
     maven("https://repo.codemc.io/repository/maven-public/")
     maven("https://jitpack.io")
 }
