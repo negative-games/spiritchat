@@ -22,7 +22,7 @@ repositories {
     }
 
 
-    maven { url 'https://repo.negative.games/repository/maven-snapshots/' }
+    maven { url 'https://repo.moonrise.gg/repository/maven-snapshots/' }
 }
 
 dependencies {
