@@ -11,6 +11,7 @@ public class AntiMessageSigningSettings {
     @Comment({
             "Whether outgoing player chat packets should be rewritten as system chat packets.",
             "This makes formatted chat unreportable and avoids clients rejecting modified signed messages.",
+            "Leave this enabled for unsigned chat compatibility.",
             "Supported on Paper 1.21.8+ while the server's chat packet structure remains compatible.",
             " ",
             "Default: true"
@@ -22,6 +23,7 @@ public class AntiMessageSigningSettings {
             "Whether the login packet should tell clients that secure chat is enforced.",
             "Leave this disabled unless you specifically want vanilla clients to require signed chat.",
             "Enabling it can cause clients without an accepted profile key to block chat.",
+            "If you allow unsigned clients, also set enforce-secure-profile=false in server.properties.",
             " ",
             "Default: false"
     })

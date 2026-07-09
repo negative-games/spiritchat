@@ -22,6 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AntiMessageSigningService implements Enableable, Disableable, Reloadable {
 
     private static final Key LISTENER_KEY = Key.key("spiritchat", "anti_message_signing");
+    private static final String UNSIGNED_CHAT_HELP = """
+            If players without profile public keys still trigger Paper warnings like 'Failed to update secure chat state', set enforce-secure-profile=false in server.properties. SpiritChat's anti-message-signing defaults are already permissive for unsigned chat: enabled=true and claim-secure-chat-enforced=false.""";
 
     private final ConfigService config;
 
@@ -56,6 +58,7 @@ public class AntiMessageSigningService implements Enableable, Disableable, Reloa
         try {
             register(settings);
             log.info("Anti-message-signing packet rewrite enabled.");
+            log.info(UNSIGNED_CHAT_HELP);
         } catch (ReflectiveOperationException exception) {
             log.error("Failed to enable anti-message-signing packet rewrite.", exception);
         }
