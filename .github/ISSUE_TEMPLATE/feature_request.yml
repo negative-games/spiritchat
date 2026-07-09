@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest a SpiritChat improvement.
+title: "[Feature]: "
+type: feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for feature requests that would improve chat formatting, permissions, placeholders, commands, configuration, integrations, or admin workflows.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-request checks
+      options:
+        - label: I have checked existing issues for a duplicate request.
+          required: true
+        - label: I have checked the README to confirm this is not already supported.
+          required: true
+        - label: I am using the latest version of the plugin.
+          required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the behavior, commands, permissions, config fields, integrations, or formatting features you want.
+    validations:
+      required: true
+  - type: textarea
+    id: config-example
+    attributes:
+      label: Example configuration or command flow
+      description: If relevant, show what the configuration or admin workflow could look like.
+      render: yaml
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Mention workarounds, plugins, or existing SpiritChat behavior you considered.
+    validations:
+      required: false

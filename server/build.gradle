@@ -2,12 +2,21 @@ plugins {
     id 'java'
     id "io.github.goooler.shadow" version "8.1.7"
     id "xyz.jpenilla.run-paper" version "2.3.1"
+    id "com.modrinth.minotaur" version "2.9.0"
 }
 
 def id = "SpiritChat"
 def group = 'software.lmao.spiritchat'
 def platform = "Paper"
-def version = '0.2.2'
+def version = '0.3.0'
+
+def modrinthGameVersions = providers.environmentVariable("MODRINTH_GAME_VERSIONS")
+        .map { versions -> versions.split(",").collect { it.trim() }.findAll { !it.isEmpty() } }
+        .orElse(["1.21.4"])
+
+def modrinthLoaders = providers.environmentVariable("MODRINTH_LOADERS")
+        .map { loaders -> loaders.split(",").collect { it.trim() }.findAll { !it.isEmpty() } }
+        .orElse(["paper"])
 
 repositories {
     mavenCentral()
@@ -45,6 +54,19 @@ dependencies {
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.14.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.14.4")
+
+    testCompileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    testCompileOnly("de.exlll:configlib-yaml:4.5.0")
+    testCompileOnly("games.negative.alumina:alumina:3.5.1-SNAPSHOT")
+    testCompileOnly("net.luckperms:api:5.4")
+    testCompileOnly("me.clip:placeholderapi:2.11.6")
+    testCompileOnly("org.projectlombok:lombok:1.18.32")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.32")
+    testRuntimeOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    testRuntimeOnly("games.negative.alumina:alumina:3.5.1-SNAPSHOT")
 }
 
 def targetJavaVersion = 21
@@ -63,6 +85,10 @@ tasks.withType(JavaCompile).configureEach {
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         options.release.set(targetJavaVersion)
     }
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
 }
 
 processResources {
@@ -92,4 +118,20 @@ shadowJar {
 
     relocate "games.negative.alumina", "${group}.libs.alumina"
     relocate "org.bstats", "${group}.libs.bstats"
+}
+
+modrinth {
+    token.set(providers.environmentVariable("MODRINTH_TOKEN"))
+    projectId.set(providers.environmentVariable("MODRINTH_PROJECT_ID").orElse("spiritchat"))
+    versionNumber.set(providers.environmentVariable("MODRINTH_VERSION_NUMBER").orElse(version))
+    versionName.set(providers.environmentVariable("MODRINTH_VERSION_NAME").orElse("SpiritChat ${version}"))
+    versionType.set(providers.environmentVariable("MODRINTH_VERSION_TYPE").orElse("release"))
+    uploadFile.set(tasks.shadowJar)
+    gameVersions.addAll(modrinthGameVersions)
+    loaders.addAll(modrinthLoaders)
+    changelog.set(providers.environmentVariable("MODRINTH_CHANGELOG").orElse("Automated release."))
+}
+
+tasks.named("modrinth") {
+    dependsOn(tasks.shadowJar)
 }
