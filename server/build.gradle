@@ -8,7 +8,7 @@ plugins {
 def id = "SpiritChat"
 def group = 'software.lmao.spiritchat'
 def platform = "Paper"
-def version = '0.2.2'
+def version = '0.3.0'
 
 def modrinthGameVersions = providers.environmentVariable("MODRINTH_GAME_VERSIONS")
         .map { versions -> versions.split(",").collect { it.trim() }.findAll { !it.isEmpty() } }
