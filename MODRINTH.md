@@ -57,6 +57,8 @@ admin: <red>[Admin]</red> <white>%username%</white> <dark_gray>></dark_gray> <re
 
 </details>
 
+Group formatting follows LuckPerms group weights. When static formatting is disabled, SpiritChat checks a player's inherited LuckPerms groups from highest weight to lowest weight and uses the first configured group format it finds. If `default` is being used instead of `admin`, make sure the `admin` group has a higher LuckPerms weight than `default`.
+
 ### Chat Item Display
 
 Players with the configured permission can show their held item in chat by using item placeholders.
