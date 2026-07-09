@@ -4,11 +4,11 @@ import net.minecrell.pluginyml.paper.PaperPluginDescription
 plugins {
     id("java")
     id("io.github.goooler.shadow") version "8.1.7"
-    id("net.kyori.indra.git") version "3.1.3"
     id("net.minecrell.plugin-yml.paper") version "0.6.0"
 }
 
-val location = "games.negative.chat"
+val identifier = "SpiritChat"
+val location = "gg.moonrise.chat"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -16,25 +16,32 @@ repositories {
 
     maven("https://repo.papermc.io/repository/maven-public/")
 
+    maven("https://repo.moonrise.gg/repository/maven-releases/")
     maven("https://repo.moonrise.gg/repository/maven-snapshots/")
     maven("https://repo.codemc.io/repository/maven-public/")
     maven("https://jitpack.io")
 }
 
 dependencies {
+    implementation("gg.moonrise.engine:plugin-engine-paper:1.3.2-SNAPSHOT")
 
-    // https://mvnrepository.com/artifact/org.springframework/spring-context
     compileOnly("org.springframework:spring-context:6.2.13")
+    compileOnly("jakarta.annotation:jakarta.annotation-api:3.0.0")
 
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+    compileOnly("io.netty:netty-transport:4.1.116.Final")
+
+    compileOnly("org.incendo:cloud-paper:2.0.0-beta.10")
+    compileOnly("org.incendo:cloud-annotations:2.0.0")
+
+    compileOnly("gg.moonrise.moss:moss-common:1.2.2")
+    compileOnly("gg.moonrise.moss:moss-paper:1.2.2")
 
     compileOnly("io.vavr:vavr:0.10.7")
 
-    compileOnly("de.exlll:configlib-yaml:4.6.3")
+    compileOnly("de.exlll:configlib-yaml:4.8.1")
 
     compileOnly("com.github.ben-manes.caffeine:caffeine:3.2.3")
-
-    implementation("games.negative.alumina:alumina:3.7.1-SNAPSHOT")
 
     compileOnly("net.luckperms:api:5.4")
 
@@ -57,23 +64,23 @@ java {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set(rootProject.name + "-Paper")
+    archiveBaseName.set(identifier + "-Paper")
     archiveClassifier.set("")
     archiveVersion.set("")
 
     destinationDirectory.set(rootProject.rootDir.resolve("build"))
 
-    relocate("games.negative.alumina", "$location.libs.alumina")
+    relocate("gg.moonrise.engine", "$location.libs.engine")
 
 }
 
 configure<PaperPluginDescription> {
-    name = "SpiritChat"
-    apiVersion = "1.20"
-    version = indraGit.commit()?.name?.take(7) ?: "unknown"
-    main = "games.negative.chat.SpiritChatPlugin"
+    name = identifier
+    apiVersion = "1.21"
+    version = project.version.toString()
+    main = "$location.SpiritChatPlugin"
     load = BukkitPluginDescription.PluginLoadOrder.POSTWORLD
-    loader = "games.negative.chat.loader.SpiritChatPluginLoader"
+    loader = "$location.loader.SpiritChatPluginLoader"
 
     serverDependencies {
         register("PlaceholderAPI") {

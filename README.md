@@ -1,6 +1,6 @@
 ## SpiritChat
 
-Dev Builds: https://ci.negative.games/job/spiritchat/
+Dev Builds: https://ci.moonrise.gg/job/spiritchat/
 
 Stable Releases: https://modrinth.com/plugin/spiritchat
 
