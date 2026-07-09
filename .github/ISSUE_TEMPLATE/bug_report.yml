@@ -1,0 +1,82 @@
+name: Bug report
+description: Report a reproducible SpiritChat problem.
+title: "[Bug]: "
+type: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a SpiritChat issue. Please include enough server, plugin, and configuration context for the problem to be reproduced.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-report checks
+      options:
+        - label: I have checked existing issues for a duplicate report.
+          required: true
+        - label: I can reproduce this on the latest version of the plugin.
+          required: true
+        - label: I have tested with the relevant configuration reloaded or after a clean restart.
+          required: true
+  - type: input
+    id: server-version
+    attributes:
+      label: Server software and version
+      description: Include the Paper build and Minecraft version.
+      placeholder: "Example: Paper 1.21.4 build 123"
+    validations:
+      required: true
+  - type: textarea
+    id: plugin-environment
+    attributes:
+      label: Full plugin list
+      description: List all plugins active on the server, including chat, permissions, and placeholder plugins.
+      placeholder: |
+        SpiritChat, LuckPerms, PlaceholderAPI
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal set of actions, commands, messages, or permission/group changes that reproduces the issue.
+      placeholder: |
+        1. Configure ...
+        2. Assign ...
+        3. Send ...
+        4. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Paste the smallest relevant parts of your SpiritChat configuration. Remove secrets before posting.
+      render: yaml
+    validations:
+      required: false
+  - type: textarea
+    id: error
+    attributes:
+      label: Exception or error
+      description: |
+        Share any exception or error you encountered.
+        Leave this blank or put "N/A" if you do not have an exception or error.
+      render: text
+      placeholder: "java.lang.NullPointerException: null"
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Add screenshots, chat output, permission context, or anything else that helps reproduce the issue.
+    validations:
+      required: false

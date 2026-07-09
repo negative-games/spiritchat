@@ -1,0 +1,110 @@
+name: Update Modrinth Description
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  update-description:
+    name: Update Description
+    runs-on: ubuntu-latest
+    env:
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      MODRINTH_PROJECT_ID: ${{ secrets.MODRINTH_PROJECT_ID }}
+      MODRINTH_FALLBACK_PROJECT: spiritchat
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+
+      - name: Check for Modrinth description changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_tag="${{ github.event.release.tag_name }}"
+          current_commit="$(git rev-list -n 1 "${current_tag}")"
+          previous_tag="$(git describe --tags --abbrev=0 "${current_commit}^" 2>/dev/null || true)"
+
+          if [ ! -f MODRINTH.md ]; then
+            echo "MODRINTH.md does not exist on ${current_tag}; skipping."
+            echo "should_update=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if [ -z "${previous_tag}" ]; then
+            echo "No previous tag found; updating Modrinth description from MODRINTH.md."
+            echo "should_update=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          echo "Checking MODRINTH.md changes between ${previous_tag} and ${current_tag}."
+          if git diff --name-only "${previous_tag}" "${current_tag}" -- MODRINTH.md | grep -qx 'MODRINTH.md'; then
+            echo "MODRINTH.md changed in this release."
+            echo "should_update=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "MODRINTH.md did not change in this release; skipping."
+            echo "should_update=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Validate Modrinth configuration
+        if: steps.changes.outputs.should_update == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${MODRINTH_TOKEN}" ]; then
+            echo "MODRINTH_TOKEN repository secret is required." >&2
+            exit 1
+          fi
+
+      - name: Build Modrinth API payload
+        if: steps.changes.outputs.should_update == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          body = Path("MODRINTH.md").read_text(encoding="utf-8")
+          Path("modrinth-description.json").write_text(
+              json.dumps({"body": body}, ensure_ascii=False),
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Update Modrinth description
+        if: steps.changes.outputs.should_update == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          project_id="${MODRINTH_PROJECT_ID:-${MODRINTH_FALLBACK_PROJECT}}"
+          response_file="$(mktemp)"
+          http_status="$(
+            curl --silent --show-error --output "${response_file}" --write-out "%{http_code}" \
+              --request PATCH \
+              --url "https://api.modrinth.com/v2/project/${project_id}" \
+              --header "Authorization: ${MODRINTH_TOKEN}" \
+              --header "Content-Type: application/json" \
+              --header "User-Agent: ${GITHUB_REPOSITORY} GitHub Actions (https://github.com/${GITHUB_REPOSITORY})" \
+              --data @modrinth-description.json
+          )"
+
+          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "Modrinth API request failed with HTTP ${http_status}." >&2
+            cat "${response_file}" >&2
+            exit 1
+          fi
+
+          echo "Updated Modrinth description for ${project_id}."

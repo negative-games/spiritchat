@@ -1,0 +1,87 @@
+name: Publish Modrinth
+
+on:
+  release:
+    types:
+      - published
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    env:
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      MODRINTH_PROJECT_ID: ${{ secrets.MODRINTH_PROJECT_ID }}
+      MODRINTH_GAME_VERSIONS: ${{ vars.MODRINTH_GAME_VERSIONS || '1.21.4' }}
+      MODRINTH_LOADERS: ${{ vars.MODRINTH_LOADERS || 'paper' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Prepare Modrinth metadata
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
+            version_number="$(jq -r '.release.tag_name // ""' "${GITHUB_EVENT_PATH}")"
+            version_name="$(jq -r '.release.name // ""' "${GITHUB_EVENT_PATH}")"
+            version_type="$(jq -r 'if .release.prerelease then "beta" else "release" end' "${GITHUB_EVENT_PATH}")"
+            changelog="$(jq -r '.release.body // ""' "${GITHUB_EVENT_PATH}")"
+
+            if [ -z "${version_name}" ]; then
+              version_name="${version_number}"
+            fi
+            if [ -z "${changelog}" ]; then
+              changelog="Release ${version_number}."
+            fi
+          else
+            short_sha="${GITHUB_SHA::7}"
+            version_number="SpiritChat-${short_sha}"
+            version_name="${version_number}"
+            version_type="alpha"
+            commit_url="https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
+            changelog="Alpha build from [${commit_url}](${commit_url})."
+          fi
+
+          {
+            echo "MODRINTH_VERSION_NUMBER=${version_number}"
+            echo "MODRINTH_VERSION_NAME=${version_name}"
+            echo "MODRINTH_VERSION_TYPE=${version_type}"
+            echo "MODRINTH_CHANGELOG<<EOF"
+            echo "${changelog}"
+            echo "EOF"
+          } >> "${GITHUB_ENV}"
+
+      - name: Validate Modrinth configuration
+        run: |
+          if [ -z "${MODRINTH_TOKEN}" ]; then
+            echo "MODRINTH_TOKEN repository secret is required." >&2
+            exit 1
+          fi
+          if [ -z "${MODRINTH_PROJECT_ID}" ]; then
+            echo "MODRINTH_PROJECT_ID repository secret is required." >&2
+            exit 1
+          fi
+
+      - name: Run tests
+        run: ./gradlew :server:test
+
+      - name: Publish to Modrinth
+        run: ./gradlew :server:modrinth
