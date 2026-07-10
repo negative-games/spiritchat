@@ -5,203 +5,130 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.util.Objects;
-import java.util.UUID;
-
 @Slf4j
 public final class AntiMessageSigningPacketHandler extends ChannelDuplexHandler {
 
     public static final String HANDLER_NAME = "spiritchat_anti_message_signing";
 
-    private static final String PLAYER_CHAT_PACKET = "net.minecraft.network.protocol.game.ClientboundPlayerChatPacket";
-    private static final String LOGIN_PACKET = "net.minecraft.network.protocol.game.ClientboundLoginPacket";
-    private static final String SYSTEM_CHAT_PACKET = "net.minecraft.network.protocol.game.ClientboundSystemChatPacket";
-    private static final String COMPONENT = "net.minecraft.network.chat.Component";
-
-    private final boolean bedrockOnly;
-    private final boolean claimSecureChatEnforced;
-    private Reflection reflection;
+    private final MessageSigningOptions options;
+    private ChatPacketReflection chatReflection;
+    private LoginPacketReflection loginReflection;
+    private StatusPacketReflection statusReflection;
     private boolean rewriteFailureLogged = false;
 
-    public AntiMessageSigningPacketHandler(boolean bedrockOnly, boolean claimSecureChatEnforced) {
-        this.bedrockOnly = bedrockOnly;
-        this.claimSecureChatEnforced = claimSecureChatEnforced;
+    public AntiMessageSigningPacketHandler(MessageSigningOptions options) {
+        this.options = options;
     }
 
-    public static boolean isSupported() {
-        try {
-            Reflection.load();
-            return true;
-        } catch (ReflectiveOperationException exception) {
-            log.debug("Anti-message-signing packet rewrite is not supported by this server.", exception);
-            return false;
-        }
+    public int generation() {
+        return options.generation();
+    }
+
+    public static boolean isChatRewriteSupported() {
+        return isSupported(ChatPacketReflection::load, "chat packet rewrite");
+    }
+
+    public static boolean isLoginRewriteSupported() {
+        return isSupported(LoginPacketReflection::load, "secure-chat login claim");
+    }
+
+    public static boolean isStatusRewriteSupported() {
+        return isSupported(StatusPacketReflection::load, "report-prevention status response");
     }
 
     @Override
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if (PLAYER_CHAT_PACKET.equals(msg.getClass().getName())) {
-            rewritePlayerChat(ctx, msg, promise);
+    public void write(ChannelHandlerContext context, Object packet, ChannelPromise promise) throws Exception {
+        String packetType = packet.getClass().getName();
+
+        if (options.rewritePlayerChat() && ChatPacketReflection.PLAYER_CHAT_PACKET.equals(packetType)) {
+            rewritePlayerChat(context, packet, promise);
             return;
         }
 
-        if (claimSecureChatEnforced && LOGIN_PACKET.equals(msg.getClass().getName())) {
-            rewriteLogin(ctx, msg, promise);
+        if (options.claimSecureChatEnforced() && LoginPacketReflection.LOGIN_PACKET.equals(packetType)) {
+            rewriteLogin(context, packet, promise);
             return;
         }
 
-        super.write(ctx, msg, promise);
+        if (options.sendPreventsChatReportsToClient() && StatusPacketReflection.STATUS_RESPONSE_PACKET.equals(packetType)) {
+            rewriteStatus(context, packet, promise);
+            return;
+        }
+
+        super.write(context, packet, promise);
     }
 
-    private void rewritePlayerChat(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+    private void rewritePlayerChat(ChannelHandlerContext context, Object packet, ChannelPromise promise) throws Exception {
         try {
-            Reflection reflection = reflection();
-            if (bedrockOnly && !isBedrockPlayer((UUID) reflection.sender.invoke(msg))) {
-                super.write(ctx, msg, promise);
+            ChatPacketReflection reflection = chatReflection();
+            if (options.bedrockOnly() && !reflection.isBedrockSender(packet)) {
+                super.write(context, packet, promise);
                 return;
             }
 
-            Object content = Objects.requireNonNullElseGet(
-                    reflection.unsignedContent.invoke(msg),
-                    () -> literalContent(reflection, msg)
-            );
-            Object decoratedContent = reflection.decorate.invoke(reflection.chatType.invoke(msg), content);
-            Object systemPacket = reflection.systemChatConstructor.newInstance(decoratedContent, false);
-
-            ctx.write(systemPacket, promise);
+            context.write(reflection.rewrite(packet), promise);
         } catch (ReflectiveOperationException | RuntimeException exception) {
-            failOpen(ctx, msg, promise, "Failed to rewrite a signed chat packet. Sending the original packet instead.", exception);
+            failOpen(context, packet, promise, "Failed to rewrite a signed chat packet. Sending the original packet instead.", exception);
         }
     }
 
-    private void rewriteLogin(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+    private void rewriteLogin(ChannelHandlerContext context, Object packet, ChannelPromise promise) throws Exception {
         try {
-            Reflection reflection = reflection();
-            Object rewritten = reflection.loginConstructor.newInstance(
-                    reflection.playerId.invoke(msg),
-                    reflection.hardcore.invoke(msg),
-                    reflection.levels.invoke(msg),
-                    reflection.maxPlayers.invoke(msg),
-                    reflection.chunkRadius.invoke(msg),
-                    reflection.simulationDistance.invoke(msg),
-                    reflection.reducedDebugInfo.invoke(msg),
-                    reflection.showDeathScreen.invoke(msg),
-                    reflection.doLimitedCrafting.invoke(msg),
-                    reflection.commonPlayerSpawnInfo.invoke(msg),
-                    reflection.onlineMode.invoke(msg),
-                    true
-            );
-            ctx.write(rewritten, promise);
+            context.write(loginReflection().rewriteClaimingSecureChat(packet), promise);
         } catch (ReflectiveOperationException | RuntimeException exception) {
-            failOpen(ctx, msg, promise, "Failed to rewrite the login packet. Sending the original packet instead.", exception);
+            failOpen(context, packet, promise, "Failed to rewrite the login packet. Sending the original packet instead.", exception);
         }
     }
 
-    private void failOpen(ChannelHandlerContext ctx, Object msg, ChannelPromise promise, String message, Exception exception) throws Exception {
+    private void rewriteStatus(ChannelHandlerContext context, Object packet, ChannelPromise promise) throws Exception {
+        try {
+            context.write(statusReflection().rewrite(context, packet), promise);
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            failOpen(context, packet, promise, "Failed to rewrite the server status response. Sending the original packet instead.", exception);
+        }
+    }
+
+    private void failOpen(ChannelHandlerContext context, Object packet, ChannelPromise promise, String message, Exception exception) throws Exception {
         if (!rewriteFailureLogged) {
             log.warn(message, exception);
             rewriteFailureLogged = true;
         }
-        super.write(ctx, msg, promise);
+        super.write(context, packet, promise);
     }
 
-    private Object literalContent(Reflection reflection, Object msg) {
+    private ChatPacketReflection chatReflection() throws ReflectiveOperationException {
+        if (chatReflection == null) {
+            chatReflection = ChatPacketReflection.load();
+        }
+        return chatReflection;
+    }
+
+    private LoginPacketReflection loginReflection() throws ReflectiveOperationException {
+        if (loginReflection == null) {
+            loginReflection = LoginPacketReflection.load();
+        }
+        return loginReflection;
+    }
+
+    private StatusPacketReflection statusReflection() throws ReflectiveOperationException {
+        if (statusReflection == null) {
+            statusReflection = StatusPacketReflection.load();
+        }
+        return statusReflection;
+    }
+
+    private static boolean isSupported(ReflectionLoader loader, String feature) {
         try {
-            Object body = reflection.body.invoke(msg);
-            String content = (String) reflection.bodyContent.invoke(body);
-            return reflection.literal.invoke(null, content);
+            loader.load();
+            return true;
         } catch (ReflectiveOperationException exception) {
-            throw new IllegalStateException("Failed to read signed chat packet body.", exception);
+            log.debug("SpiritChat {} is not supported by this server.", feature, exception);
+            return false;
         }
     }
 
-    private Reflection reflection() throws ReflectiveOperationException {
-        if (reflection == null) {
-            reflection = Reflection.load();
-        }
-
-        return reflection;
-    }
-
-    private boolean isBedrockPlayer(UUID uuid) {
-        return uuid.version() == 0;
-    }
-
-    private record Reflection(
-            Method sender,
-            Method unsignedContent,
-            Method body,
-            Method bodyContent,
-            Method chatType,
-            Method decorate,
-            Method literal,
-            Constructor<?> systemChatConstructor,
-            Constructor<?> loginConstructor,
-            Method playerId,
-            Method hardcore,
-            Method levels,
-            Method maxPlayers,
-            Method chunkRadius,
-            Method simulationDistance,
-            Method reducedDebugInfo,
-            Method showDeathScreen,
-            Method doLimitedCrafting,
-            Method commonPlayerSpawnInfo,
-            Method onlineMode
-    ) {
-
-        private static Reflection load() throws ReflectiveOperationException {
-            Class<?> playerChatPacket = Class.forName(PLAYER_CHAT_PACKET);
-            Class<?> loginPacket = Class.forName(LOGIN_PACKET);
-            Class<?> systemChatPacket = Class.forName(SYSTEM_CHAT_PACKET);
-            Class<?> component = Class.forName(COMPONENT);
-
-            Method chatType = playerChatPacket.getMethod("chatType");
-            Class<?> boundChatType = chatType.getReturnType();
-
-            Method body = playerChatPacket.getMethod("body");
-            Class<?> bodyType = body.getReturnType();
-
-            Method levels = loginPacket.getMethod("levels");
-            Method commonPlayerSpawnInfo = loginPacket.getMethod("commonPlayerSpawnInfo");
-
-            return new Reflection(
-                    playerChatPacket.getMethod("sender"),
-                    playerChatPacket.getMethod("unsignedContent"),
-                    body,
-                    bodyType.getMethod("content"),
-                    chatType,
-                    boundChatType.getMethod("decorate", component),
-                    component.getMethod("literal", String.class),
-                    systemChatPacket.getConstructor(component, boolean.class),
-                    loginPacket.getConstructor(
-                            int.class,
-                            boolean.class,
-                            levels.getReturnType(),
-                            int.class,
-                            int.class,
-                            int.class,
-                            boolean.class,
-                            boolean.class,
-                            boolean.class,
-                            commonPlayerSpawnInfo.getReturnType(),
-                            boolean.class,
-                            boolean.class
-                    ),
-                    loginPacket.getMethod("playerId"),
-                    loginPacket.getMethod("hardcore"),
-                    levels,
-                    loginPacket.getMethod("maxPlayers"),
-                    loginPacket.getMethod("chunkRadius"),
-                    loginPacket.getMethod("simulationDistance"),
-                    loginPacket.getMethod("reducedDebugInfo"),
-                    loginPacket.getMethod("showDeathScreen"),
-                    loginPacket.getMethod("doLimitedCrafting"),
-                    commonPlayerSpawnInfo,
-                    loginPacket.getMethod("onlineMode")
-            );
-        }
+    @FunctionalInterface
+    private interface ReflectionLoader {
+        void load() throws ReflectiveOperationException;
     }
 }
