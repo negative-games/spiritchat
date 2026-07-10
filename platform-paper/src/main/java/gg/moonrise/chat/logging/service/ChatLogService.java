@@ -3,7 +3,6 @@ package gg.moonrise.chat.logging.service;
 import gg.moonrise.chat.config.ConfigService;
 import gg.moonrise.chat.logging.model.ChatLogEntry;
 import gg.moonrise.chat.logging.storage.ChatLogRepository;
-import gg.moonrise.chat.logging.util.ChatLogText;
 import gg.moonrise.chat.logging.util.UuidV7;
 import gg.moonrise.chat.util.PlatformTasks;
 import gg.moonrise.engine.message.util.MiniMessageUtil;
@@ -45,7 +44,7 @@ public class ChatLogService {
                 UuidV7.generate(),
                 senderId,
                 sender.getName(),
-                ChatLogText.normalize(
+                truncate(
                         MiniMessageUtil.componentToPlainText(message),
                         configService.get().getLoggingSettings().effectiveMaxMessageLength()
                 ),
@@ -60,5 +59,12 @@ public class ChatLogService {
                     log.warn("Failed to store chat log entry for {}.", entry.senderId(), throwable);
                     return null;
                 });
+    }
+
+    private String truncate(String input, int maxLength) {
+        String text = input == null ? "" : input;
+        if (text.length() <= maxLength) return text;
+
+        return text.substring(0, maxLength);
     }
 }

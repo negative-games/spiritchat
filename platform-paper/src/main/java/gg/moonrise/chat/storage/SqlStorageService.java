@@ -111,7 +111,7 @@ public class SqlStorageService implements Disableable, Reloadable {
             newDataSource = new HikariDataSource(hikariConfig);
             createTables(newDataSource, newDialect);
             newExecutor = Executors.newFixedThreadPool(
-                    SqlStorageSizing.workerThreads(settings, newDialect),
+                    connectionPoolSize(settings, newDialect),
                     threadFactory(newDialect)
             );
 
@@ -147,29 +147,33 @@ public class SqlStorageService implements Disableable, Reloadable {
 
                 config.setJdbcUrl("jdbc:sqlite:" + databaseFile.getAbsolutePath());
                 config.setDriverClassName("org.sqlite.JDBC");
-                config.setMaximumPoolSize(SqlStorageSizing.connectionPoolSize(settings, dialect));
+                config.setMaximumPoolSize(connectionPoolSize(settings, dialect));
             }
             case MYSQL -> {
                 config.setJdbcUrl("jdbc:mysql://" + settings.getHost() + ":" + settings.getPort() + "/" + settings.getDatabase());
                 config.setUsername(settings.getUsername());
                 config.setPassword(settings.getPassword());
-                config.setMaximumPoolSize(SqlStorageSizing.connectionPoolSize(settings, dialect));
+                config.setMaximumPoolSize(connectionPoolSize(settings, dialect));
             }
             case MARIADB -> {
                 config.setJdbcUrl("jdbc:mariadb://" + settings.getHost() + ":" + settings.getPort() + "/" + settings.getDatabase());
                 config.setUsername(settings.getUsername());
                 config.setPassword(settings.getPassword());
-                config.setMaximumPoolSize(SqlStorageSizing.connectionPoolSize(settings, dialect));
+                config.setMaximumPoolSize(connectionPoolSize(settings, dialect));
             }
             case POSTGRESQL -> {
                 config.setJdbcUrl("jdbc:postgresql://" + settings.getHost() + ":" + settings.getPort() + "/" + settings.getDatabase());
                 config.setUsername(settings.getUsername());
                 config.setPassword(settings.getPassword());
-                config.setMaximumPoolSize(SqlStorageSizing.connectionPoolSize(settings, dialect));
+                config.setMaximumPoolSize(connectionPoolSize(settings, dialect));
             }
         }
 
         return config;
+    }
+
+    private int connectionPoolSize(DatabaseSettings settings, SqlDialect dialect) {
+        return dialect == SqlDialect.SQLITE ? 1 : settings.boundedPoolSize();
     }
 
     private void createTables(HikariDataSource source, SqlDialect dialect) throws SQLException {

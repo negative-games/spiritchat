@@ -34,6 +34,6 @@ public class LoggingSettings {
     private int maxMessageLength = DEFAULT_MAX_MESSAGE_LENGTH;
 
     public int effectiveMaxMessageLength() {
-        return Math.max(MIN_MAX_MESSAGE_LENGTH, Math.min(MAX_MAX_MESSAGE_LENGTH, maxMessageLength));
+        return Math.clamp(maxMessageLength, MIN_MAX_MESSAGE_LENGTH, MAX_MAX_MESSAGE_LENGTH);
     }
 }

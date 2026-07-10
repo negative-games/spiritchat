@@ -21,10 +21,6 @@ public class ChatLogRepository {
     private final SqlStorageService storage;
 
     public CompletableFuture<Void> insert(ChatLogEntry entry) {
-        if (!storage.isAvailable()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("SQL storage is not available"));
-        }
-
         return storage.runAsync(() -> {
             try (Connection connection = storage.connection();
                  PreparedStatement statement = connection.prepareStatement("""
@@ -43,10 +39,6 @@ public class ChatLogRepository {
     }
 
     public CompletableFuture<List<ChatLogEntry>> findRecentPage(int page, int pageSize) {
-        if (!storage.isAvailable()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("SQL storage is not available"));
-        }
-
         ChatLogPage logPage = new ChatLogPage(page, pageSize);
         return storage.supplyAsync(() -> {
             try (Connection connection = storage.connection();
@@ -64,10 +56,6 @@ public class ChatLogRepository {
     }
 
     public CompletableFuture<List<ChatLogEntry>> findBySenderNamePage(String senderName, int page, int pageSize) {
-        if (!storage.isAvailable()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("SQL storage is not available"));
-        }
-
         ChatLogPage logPage = new ChatLogPage(page, pageSize);
         return storage.supplyAsync(() -> {
             try (Connection connection = storage.connection();
@@ -81,10 +69,6 @@ public class ChatLogRepository {
     }
 
     public CompletableFuture<List<ChatLogEntry>> findBySenderIdPage(UUID senderId, int page, int pageSize) {
-        if (!storage.isAvailable()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("SQL storage is not available"));
-        }
-
         ChatLogPage logPage = new ChatLogPage(page, pageSize);
         return storage.supplyAsync(() -> {
             try (Connection connection = storage.connection();

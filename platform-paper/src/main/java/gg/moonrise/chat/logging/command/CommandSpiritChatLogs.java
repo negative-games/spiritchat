@@ -1,7 +1,6 @@
 package gg.moonrise.chat.logging.command;
 
 import gg.moonrise.chat.config.ConfigService;
-import gg.moonrise.chat.mention.service.OnlinePlayerNameService;
 import gg.moonrise.chat.logging.model.ChatLogPage;
 import gg.moonrise.chat.logging.model.ChatLogEntry;
 import gg.moonrise.chat.logging.storage.ChatLogRepository;
@@ -11,7 +10,9 @@ import gg.moonrise.moss.spring.SpringComponent;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.incendo.cloud.annotation.specifier.Greedy;
 import org.incendo.cloud.annotations.Argument;
 import org.incendo.cloud.annotations.Command;
@@ -22,11 +23,11 @@ import org.incendo.cloud.context.CommandContext;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 @SpringComponent
 @RequiredArgsConstructor
@@ -38,7 +39,6 @@ public class CommandSpiritChatLogs implements PaperCommand {
 
     private final ConfigService configService;
     private final ChatLogRepository chatLogRepository;
-    private final OnlinePlayerNameService onlinePlayerNameService;
 
     @Command("chat|spiritchat logs")
     @Permission("spiritchat.admin")
@@ -70,7 +70,7 @@ public class CommandSpiritChatLogs implements PaperCommand {
         Integer page = page(source.getSender(), pageInput);
         if (page == null) return;
 
-        sendLogs(source.getSender(), page, "/chat logs recent", () -> chatLogRepository.findRecentPage(page, ChatLogPage.LOOKAHEAD_PAGE_SIZE));
+        sendLogs(source.getSender(), page, "/chat logs recent", chatLogRepository.findRecentPage(page, ChatLogPage.LOOKAHEAD_PAGE_SIZE));
     }
 
     @Command("chat|spiritchat logs recent <page> <extra>")
@@ -103,7 +103,7 @@ public class CommandSpiritChatLogs implements PaperCommand {
         Integer page = page(source.getSender(), pageInput);
         if (page == null) return;
 
-        sendLogs(source.getSender(), page, "/chat logs player " + player, () -> chatLogRepository.findBySenderNamePage(player, page, ChatLogPage.LOOKAHEAD_PAGE_SIZE));
+        sendLogs(source.getSender(), page, "/chat logs player " + player, chatLogRepository.findBySenderNamePage(player, page, ChatLogPage.LOOKAHEAD_PAGE_SIZE));
     }
 
     @Command("chat|spiritchat logs player <player> <page> <extra>")
@@ -144,7 +144,7 @@ public class CommandSpiritChatLogs implements PaperCommand {
             return;
         }
 
-        sendLogs(source.getSender(), page, "/chat logs uuid " + uuid, () -> chatLogRepository.findBySenderIdPage(playerId, page, ChatLogPage.LOOKAHEAD_PAGE_SIZE));
+        sendLogs(source.getSender(), page, "/chat logs uuid " + uuid, chatLogRepository.findBySenderIdPage(playerId, page, ChatLogPage.LOOKAHEAD_PAGE_SIZE));
     }
 
     @Command("chat|spiritchat logs uuid <uuid> <page> <extra>")
@@ -196,15 +196,7 @@ public class CommandSpiritChatLogs implements PaperCommand {
         ));
     }
 
-    private void sendLogs(CommandSender sender, int page, String command, Supplier<CompletableFuture<List<ChatLogEntry>>> query) {
-        CompletableFuture<List<ChatLogEntry>> logs;
-        try {
-            logs = query.get();
-        } catch (RuntimeException exception) {
-            PlatformTasks.run(sender, () -> configService.send(sender, configService.messages().getLogs().getStorageUnavailable()));
-            return;
-        }
-
+    private void sendLogs(CommandSender sender, int page, String command, CompletableFuture<List<ChatLogEntry>> logs) {
         logs.thenAccept(entries -> PlatformTasks.run(sender, () -> sendEntries(sender, entries, page, command)))
                 .exceptionally(throwable -> {
                     PlatformTasks.run(sender, () -> configService.send(sender, configService.messages().getLogs().getStorageUnavailable()));
@@ -219,7 +211,7 @@ public class CommandSpiritChatLogs implements PaperCommand {
         }
 
         boolean hasNextPage = entries.size() > ChatLogPage.DEFAULT_PAGE_SIZE;
-        List<ChatLogEntry> pageEntries = hasNextPage ? new ArrayList<>(entries.subList(0, ChatLogPage.DEFAULT_PAGE_SIZE)) : entries;
+        List<ChatLogEntry> pageEntries = hasNextPage ? entries.subList(0, ChatLogPage.DEFAULT_PAGE_SIZE) : entries;
 
         configService.send(
                 sender,
@@ -252,7 +244,12 @@ public class CommandSpiritChatLogs implements PaperCommand {
 
     @Suggestions("online-players")
     public Iterable<String> onlinePlayerSuggestions(CommandContext<CommandSourceStack> context, String input) {
-        return onlinePlayerNameService.suggestions(input);
+        String normalized = input == null ? "" : input.toLowerCase(Locale.ROOT);
+        return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .filter(name -> normalized.isBlank() || name.toLowerCase(Locale.ROOT).startsWith(normalized))
+                .sorted(Comparator.naturalOrder())
+                .toList();
     }
 
     @Suggestions("log-pages")

@@ -42,10 +42,6 @@ public class PlayerOptionsRepository {
     }
 
     public CompletableFuture<Void> saveMentionPinging(UUID playerId, boolean enabled) {
-        if (!storage.isAvailable()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("SQL storage is not available"));
-        }
-
         return storage.runAsync(() -> {
             try (Connection connection = storage.connection();
                  PreparedStatement statement = connection.prepareStatement(PlayerOptionsSql.upsert(storage.dialect()))) {
