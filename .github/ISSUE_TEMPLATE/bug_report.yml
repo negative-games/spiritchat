@@ -1,0 +1,82 @@
+name: Bug report
+description: Report a reproducible SpiritChat problem.
+title: "[Bug]: "
+type: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a SpiritChat issue. Please include enough server, chat, and configuration context for the problem to be reproduced.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-report checks
+      options:
+        - label: I have checked existing issues for a duplicate report.
+          required: true
+        - label: I can reproduce this on the latest version of SpiritChat.
+          required: true
+        - label: I have tested after running /chat reload or after a clean server restart.
+          required: true
+  - type: input
+    id: server-version
+    attributes:
+      label: Server software and version
+      description: Include the Paper build and Minecraft version.
+      placeholder: "Example: Paper 1.21.8 build 42"
+    validations:
+      required: true
+  - type: textarea
+    id: plugin-environment
+    attributes:
+      label: Full plugin list
+      description: List all plugins active on the server, especially chat, permissions, proxy, and moderation plugins.
+      placeholder: |
+        SpiritChat, LuckPerms, PlaceholderAPI, your other plugins...
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest set of config changes, commands, or chat messages that reproduces the issue.
+      placeholder: |
+        1. Configure ...
+        2. Run ...
+        3. Send ...
+        4. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Paste the smallest relevant parts of config.yml and messages.yml. Remove database credentials before posting.
+      render: yaml
+    validations:
+      required: false
+  - type: textarea
+    id: error
+    attributes:
+      label: Exception, warning, or client message
+      description: |
+        Share any console exception, startup warning, or client chat warning you encountered.
+        Leave this blank or put "N/A" if you do not have one.
+      render: text
+      placeholder: "java.lang.NullPointerException: null"
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Add screenshots, chat examples, client reportability warnings, database notes, or anything else that helps reproduce the issue.
+    validations:
+      required: false
