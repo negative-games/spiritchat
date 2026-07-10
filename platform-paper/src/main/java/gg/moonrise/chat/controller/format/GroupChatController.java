@@ -9,12 +9,11 @@ import io.papermc.paper.chat.ChatRenderer;
 import io.vavr.control.Option;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.luckperms.api.model.group.Group;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,10 +30,10 @@ public final class GroupChatController implements ChatRenderer {
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofSeconds(10))
                 .build(key -> {
-                    LinkedList<Group> groups = luckPermsService.loadGroups(key);
+                    List<String> groups = luckPermsService.loadGroupNames(key);
 
-                    for (Group group : groups) {
-                        Option<String> format = settings.format(group.getName());
+                    for (String group : groups) {
+                        Option<String> format = settings.format(group);
                         if (format.isEmpty()) continue;
 
                         return Optional.of(format.get());
@@ -48,6 +47,6 @@ public final class GroupChatController implements ChatRenderer {
         Optional<String> format = cache.get(source.getUniqueId());
         if (format.isEmpty()) return ChatRenderer.defaultRenderer().render(source, sourceDisplayName, message, viewer);
 
-        return controller.applyFormat(source, format.get(), message);
+        return controller.formatter().applyFormat(source, sourceDisplayName, format.get(), message);
     }
 }

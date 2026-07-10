@@ -12,6 +12,6 @@ public record StaticChatController(ChatController controller, StaticChatSettings
 
     @Override
     public @NotNull Component render(@NotNull Player source, @NotNull Component sourceDisplayName, @NotNull Component message, @NotNull Audience viewer) {
-        return controller.applyFormat(source, settings.getFormat(), message);
+        return controller.formatter().applyFormat(source, sourceDisplayName, settings.effectiveFormat(), message);
     }
 }
