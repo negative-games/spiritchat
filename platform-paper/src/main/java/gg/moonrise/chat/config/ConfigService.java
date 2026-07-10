@@ -21,8 +21,8 @@ import java.util.Arrays;
 public class ConfigService implements Reloadable {
 
     private final File dataFolder;
-    private Configuration<Config> configuration;
-    private Configuration<Messages> messages;
+    private volatile Config configuration;
+    private volatile Messages messages;
 
     @Autowired
     public ConfigService(SpiritChatPlugin plugin) {
@@ -34,8 +34,8 @@ public class ConfigService implements Reloadable {
     }
 
     @PostConstruct
-    public void init() {
-        ConfigFiles files = loadFiles();
+    public synchronized void init() {
+        ConfigFiles files = loadFiles(false);
         publish(files);
     }
 
@@ -62,8 +62,8 @@ public class ConfigService implements Reloadable {
     }
 
     @Override
-    public void reload() {
-        ConfigFiles files = loadFiles();
+    public synchronized void reload() {
+        ConfigFiles files = loadFiles(true);
         publish(files);
     }
 
@@ -72,11 +72,11 @@ public class ConfigService implements Reloadable {
      * @return The current configuration.
      */
     public Config get() {
-        return configuration.get();
+        return configuration;
     }
 
     public Messages messages() {
-        return messages.get();
+        return messages;
     }
 
     public void send(CommandSender sender, Message message, TagResolver.Single... placeholders) {
@@ -95,11 +95,16 @@ public class ConfigService implements Reloadable {
         return resolved;
     }
 
-    private ConfigFiles loadFiles() {
-        return new ConfigFiles(
-                load("config.yml", Config.class),
-                load("messages.yml", Messages.class)
-        );
+    private ConfigFiles loadFiles(boolean reload) {
+        Configuration<Config> configuration = load("config.yml", Config.class);
+        Configuration<Messages> messages = load("messages.yml", Messages.class);
+
+        if (reload) {
+            configuration.reload();
+            messages.reload();
+        }
+
+        return new ConfigFiles(configuration.get(), messages.get());
     }
 
     private void publish(ConfigFiles files) {
@@ -107,6 +112,6 @@ public class ConfigService implements Reloadable {
         this.messages = files.messages();
     }
 
-    private record ConfigFiles(Configuration<Config> configuration, Configuration<Messages> messages) {
+    private record ConfigFiles(Config configuration, Messages messages) {
     }
 }

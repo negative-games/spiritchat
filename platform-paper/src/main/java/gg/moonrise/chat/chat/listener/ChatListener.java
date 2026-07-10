@@ -34,6 +34,8 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
 
     private static volatile ChatRenderer GLOBAL_RENDERER;
 
+    private volatile String rendererDescription = "disabled";
+
     private final ConfigService config;
     private final LuckPermsService luckPermsService;
     private final MentionService mentionService;
@@ -89,8 +91,8 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
         Config config = this.config.get();
         StaticChatSettings staticChatSettings = config.getStaticChatSettings();
         if (staticChatSettings.isEnabled()) {
-            setGlobalRenderer(new StaticChatRenderer(chatFormatService, staticChatSettings));
-            log.info("Successfully initialized Static Chat Renderer.");
+            setGlobalRenderer(new StaticChatRenderer(chatFormatService, this.config));
+            rendererDescription = "static format loaded: " + staticChatSettings.effectiveFormat();
             return;
         }
 
@@ -99,16 +101,22 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
             if (!luckPermsService.isAvailable()) {
                 log.error("LuckPerms not found! Cannot initialize Group Chat Renderer.");
                 setGlobalRenderer(null);
+                rendererDescription = "disabled because LuckPerms is unavailable";
                 return;
             }
 
-            setGlobalRenderer(new GroupChatRenderer(chatFormatService, groupChatSettings, luckPermsService));
-            log.info("Successfully initialized Group Chat Renderer.");
+            setGlobalRenderer(new GroupChatRenderer(chatFormatService, this.config, luckPermsService));
+            rendererDescription = "group formats loaded: " + groupChatSettings.effectiveFormats().size();
             return;
         }
 
         setGlobalRenderer(null);
+        rendererDescription = "disabled because static and group chat formatting are off";
         log.error("Could not initialize a Chat Renderer. Global chat messages will not be formatted.");
+    }
+
+    public String rendererDescription() {
+        return rendererDescription;
     }
 
     private static void setGlobalRenderer(ChatRenderer renderer) {

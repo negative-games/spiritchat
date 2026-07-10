@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import gg.moonrise.chat.config.ConfigService;
 import gg.moonrise.chat.config.section.chat.ChatItemSettings;
 import gg.moonrise.engine.paper.scheduler.Scheduler;
+import gg.moonrise.engine.state.Reloadable;
 import gg.moonrise.moss.spring.Disableable;
 import gg.moonrise.moss.spring.SpringComponent;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ import java.util.regex.Pattern;
 @Slf4j
 @SpringComponent
 @RequiredArgsConstructor
-public class ChatItemService implements Disableable, Listener {
+public class ChatItemService implements Disableable, Listener, Reloadable {
 
     private final ConfigService configService;
     private final AtomicLong snapshotSequence = new AtomicLong();
@@ -84,6 +85,11 @@ public class ChatItemService implements Disableable, Listener {
     public void clearCache() {
         snapshots.invalidateAll();
         placeholderPatterns.clear();
+    }
+
+    @Override
+    public void reload() {
+        clearCache();
     }
 
     public void clearSnapshot(Player player) {
