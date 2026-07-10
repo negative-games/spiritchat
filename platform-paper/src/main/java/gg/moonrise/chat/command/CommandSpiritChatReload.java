@@ -1,7 +1,7 @@
 package gg.moonrise.chat.command;
 
-import gg.moonrise.chat.service.ConfigService;
-import gg.moonrise.chat.service.SpiritChatReloadService;
+import gg.moonrise.chat.config.ConfigService;
+import gg.moonrise.chat.lifecycle.SpiritChatReloadService;
 import gg.moonrise.chat.util.PlatformTasks;
 import gg.moonrise.engine.paper.command.PaperCommand;
 import gg.moonrise.moss.spring.SpringComponent;

@@ -1,6 +1,5 @@
 package gg.moonrise.chat.storage;
 
-import gg.moonrise.chat.service.SqlStorageService;
 import gg.moonrise.moss.spring.SpringComponent;
 import lombok.RequiredArgsConstructor;
 
