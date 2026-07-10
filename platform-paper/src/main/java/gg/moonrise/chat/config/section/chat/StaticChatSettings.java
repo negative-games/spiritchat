@@ -8,10 +8,12 @@ import lombok.Getter;
 @Configuration
 public class StaticChatSettings {
 
+    private static final String DEFAULT_FORMAT = "<player><dark_gray>:</dark_gray> <message>";
+
     @Comment({
-            "Whether or not to use static chat formatting.",
-            "If enabled, all players will see the same chat format regardless of permissions or other factors",
-            "This is useful for servers that want a consistent chat experience for all players.",
+            "Uses one chat format for every player.",
+            "Keep this enabled for a simple server-wide format.",
+            "Disable this if you want group-chat-settings to choose formats by group.",
             " ",
             "Default: true"
     })
@@ -19,12 +21,18 @@ public class StaticChatSettings {
 
     @Comment({
             "",
-            "The static chat format to use if static chat is enabled.",
-            "You can use the following placeholders:",
-            "  {player} - The name of the player sending the message.",
-            "  {message} - The message sent by the player.",
+            "Format used when static chat is enabled.",
+            "Available placeholders:",
+            "  <player> - The name of the player sending the message.",
+            "  <message> - The message sent by the player.",
             " ",
-            "Default: \"{player}&8:&r {message}\""
+            "Default: \"<player><dark_gray>:</dark_gray> <message>\""
     })
-    private String format = "{player}&8:&r {message}";
+    private String format = DEFAULT_FORMAT;
+
+    public String effectiveFormat() {
+        if (format == null || format.isBlank()) return DEFAULT_FORMAT;
+
+        return format;
+    }
 }

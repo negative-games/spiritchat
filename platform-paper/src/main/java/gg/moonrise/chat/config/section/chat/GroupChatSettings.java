@@ -5,17 +5,18 @@ import de.exlll.configlib.Configuration;
 import io.vavr.control.Option;
 import lombok.Getter;
 
+import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 @Getter
 @Configuration
 public class GroupChatSettings {
 
     @Comment({
-            "Whether or not to use group chat formatting.",
-            "If enabled, chat format will be determined by the player's group.",
-            "This is useful for servers that want to differentiate chat formats based on player groups.",
+            "Uses different chat formats for different permission groups.",
+            "Requires LuckPerms.",
+            "Static chat takes priority when static-chat-settings.enabled is true.",
             " ",
             "Default: false"
     })
@@ -23,21 +24,43 @@ public class GroupChatSettings {
 
     @Comment({
             "",
-            "The group chat format to use if group chat is enabled.",
-            "You can use the following placeholders:",
-            "  {player} - The name of the player sending the message.",
-            "  {message} - The message sent by the player.",
+            "Formats used when group chat is enabled.",
+            "Keys are group names. The highest-weight matching group is used.",
+            "Available placeholders:",
+            "  <player> - The name of the player sending the message.",
+            "  <message> - The message sent by the player.",
             " ",
             "Default:",
-            " default: \"{player}&8:&r {message}\"",
-            " admin: \"&4[Admin] {player}&8:&r {message}\""
+            " default: \"<player><dark_gray>:</dark_gray> <message>\"",
+            " admin: \"<dark_red>[Admin]</dark_red> <player><dark_gray>:</dark_gray> <message>\""
     })
     private Map<String, String> formats = Map.of(
-            "default", "{player}&8:&r {message}",
-            "admin", "&4[Admin] {player}&8:&r {message}"
+            "default", "<player><dark_gray>:</dark_gray> <message>",
+            "admin", "<dark_red>[Admin]</dark_red> <player><dark_gray>:</dark_gray> <message>"
     );
 
     public Option<String> format(String group) {
-        return Option.of(formats.get(group)).filter(Objects::nonNull);
+        if (group == null || group.isBlank()) return Option.none();
+
+        return Option.of(effectiveFormats().get(normalize(group)))
+                .filter(format -> !format.isBlank());
+    }
+
+    public Map<String, String> effectiveFormats() {
+        if (formats == null || formats.isEmpty()) return Map.of();
+
+        Map<String, String> normalized = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : formats.entrySet()) {
+            String group = entry.getKey();
+            String format = entry.getValue();
+            if (group == null || group.isBlank() || format == null || format.isBlank()) continue;
+
+            normalized.putIfAbsent(normalize(group), format);
+        }
+        return Map.copyOf(normalized);
+    }
+
+    private String normalize(String group) {
+        return group.toLowerCase(Locale.ROOT);
     }
 }

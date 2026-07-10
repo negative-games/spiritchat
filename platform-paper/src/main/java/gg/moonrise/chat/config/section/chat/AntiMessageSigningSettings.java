@@ -9,10 +9,8 @@ import lombok.Getter;
 public class AntiMessageSigningSettings {
 
     @Comment({
-            "Whether outgoing player chat packets should be rewritten as system chat packets.",
-            "This makes formatted chat unreportable and avoids clients rejecting modified signed messages.",
-            "Leave this enabled for unsigned chat compatibility.",
-            "Supported on Paper 1.21.8+ while the server's chat packet structure remains compatible.",
+            "Helps formatted chat work with modern signed-chat clients.",
+            "Most servers should leave this enabled.",
             " ",
             "Default: true"
     })
@@ -20,10 +18,27 @@ public class AntiMessageSigningSettings {
 
     @Comment({
             "",
-            "Whether the login packet should tell clients that secure chat is enforced.",
-            "Leave this disabled unless you specifically want vanilla clients to require signed chat.",
-            "Enabling it can cause clients without an accepted profile key to block chat.",
-            "If you allow unsigned clients, also set enforce-secure-profile=false in server.properties.",
+            "Sends formatted player chat as system chat.",
+            "This prevents modified SpiritChat messages from being treated as reportable signed chat.",
+            " ",
+            "Default: true"
+    })
+    private boolean rewritePlayerChat = true;
+
+    @Comment({
+            "",
+            "Advertises report prevention in the server list status response.",
+            "Some clients use this to avoid reportability warnings before joining.",
+            " ",
+            "Default: true"
+    })
+    private boolean sendPreventsChatReportsToClient = true;
+
+    @Comment({
+            "",
+            "Claims secure chat is enforced during login.",
+            "Leave this disabled unless you have tested the client behavior you want.",
+            "This does not replace enforce-secure-profile=false in server.properties for unsigned clients.",
             " ",
             "Default: false"
     })
@@ -31,10 +46,15 @@ public class AntiMessageSigningSettings {
 
     @Comment({
             "",
-            "Only enable packet rewriting for Bedrock players.",
-            "Leave false unless you specifically want Java players to keep reportable signed chat.",
+            "Only rewrite player chat for Bedrock-style UUIDs.",
+            "Leave false for normal Java/Paper servers.",
+            "This only affects rewrite-player-chat.",
             " ",
             "Default: false"
     })
     private boolean bedrockOnly = false;
+
+    public boolean hasAnyActiveFeature() {
+        return rewritePlayerChat || sendPreventsChatReportsToClient || claimSecureChatEnforced;
+    }
 }

@@ -6,14 +6,32 @@ import lombok.Getter;
 import org.bukkit.Material;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 @Getter
 @Configuration
 public class ChatItemSettings {
 
+    private static final String DEFAULT_PERMISSION = "spiritchat.chatitem";
+    private static final List<String> DEFAULT_PLACEHOLDERS = List.of("<i>", "<item>");
+    private static final List<Material> DEFAULT_BLOCKED_ITEM_TYPES = List.of(
+            Material.AIR,
+            Material.CAVE_AIR,
+            Material.VOID_AIR
+    );
+    private static final List<String> RESERVED_PLACEHOLDERS = List.of(
+            "<message>",
+            "</message>",
+            "<player>",
+            "</player>",
+            "<mention>",
+            "</mention>"
+    );
+
     @Comment({
-            "Whether or not this chat item is enabled.",
-            "If disabled, this chat item will not be used in chat formatting.",
+            "Allows players to show their held item in chat.",
+            "Players still need the permission below.",
             " ",
             "Default: true"
     })
@@ -26,41 +44,82 @@ public class ChatItemSettings {
             " ",
             "Default: spiritchat.chatitem"
     })
-    private String permission = "spiritchat.chatitem";
+    private String permission = DEFAULT_PERMISSION;
 
     @Comment({
             "",
-            "Placeholders that will be replaced with the item name in chat messages.",
-            "You can add multiple placeholders if you want.",
+            "Text players can type to show their held item in chat.",
+            "Escaped placeholders, such as \\<item>, are left as normal text.",
             " ",
-            "Default: [\"{i}\", \"{item}\", \"[i]\", \"[item]\"]"
+            "Default: [\"<i>\", \"<item>\"]"
     })
-    private List<String> placeholders = List.of("{i}", "{item}", "[i]", "[item]");
-
+    private List<String> placeholders = DEFAULT_PLACEHOLDERS;
 
     @Comment({
             "",
-            "A list of item types that will not be displayed in chat messages.",
-            "If a player is holding an item in this list, it will be ignored when formatting chat messages.",
+            "Item types that cannot be shown in chat.",
+            "AIR, CAVE_AIR, and VOID_AIR prevent empty-hand showcases.",
             " ",
-            "Default: [AIR]"
+            "Default: [AIR, CAVE_AIR, VOID_AIR]"
     })
-    private List<Material> blockedItemTypes = List.of(
-            Material.AIR
-    );
+    private List<Material> blockedItemTypes = DEFAULT_BLOCKED_ITEM_TYPES;
 
     public boolean isItemTypeBlocked(Material material) {
-        return blockedItemTypes.contains(material);
+        return material != null && effectiveBlockedItemTypes().contains(material);
+    }
+
+    public String effectivePermission() {
+        if (permission == null || permission.isBlank()) return DEFAULT_PERMISSION;
+
+        return permission;
     }
 
     public boolean containsChatItemSyntax(String input) {
-        for (String placeholder : placeholders) {
-            if (placeholder == null || placeholder.isEmpty()) continue;
+        if (input == null || input.isEmpty()) return false;
 
-            if (input.contains(placeholder)) {
+        for (String placeholder : effectivePlaceholders()) {
+            if (containsUnescaped(input, placeholder)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean containsUnescaped(String input, String placeholder) {
+        int index = input.indexOf(placeholder);
+        while (index >= 0) {
+            if (!isEscaped(input, index)) return true;
+
+            index = input.indexOf(placeholder, index + placeholder.length());
+        }
+        return false;
+    }
+
+    private boolean isEscaped(String input, int index) {
+        int backslashes = 0;
+        for (int cursor = index - 1; cursor >= 0 && input.charAt(cursor) == '\\'; cursor--) {
+            backslashes++;
+        }
+        return backslashes % 2 == 1;
+    }
+
+    public List<String> effectivePlaceholders() {
+        if (placeholders == null) return DEFAULT_PLACEHOLDERS;
+
+        return placeholders.stream()
+                .filter(Objects::nonNull)
+                .filter(placeholder -> !placeholder.isEmpty())
+                .filter(placeholder -> !RESERVED_PLACEHOLDERS.contains(placeholder.toLowerCase(Locale.ROOT)))
+                .distinct()
+                .toList();
+    }
+
+    public List<Material> effectiveBlockedItemTypes() {
+        if (blockedItemTypes == null) return DEFAULT_BLOCKED_ITEM_TYPES;
+
+        return blockedItemTypes.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
     }
 }

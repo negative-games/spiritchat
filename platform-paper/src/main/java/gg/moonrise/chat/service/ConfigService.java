@@ -3,60 +3,57 @@ package gg.moonrise.chat.service;
 import de.exlll.configlib.NameFormatters;
 import gg.moonrise.chat.SpiritChatPlugin;
 import gg.moonrise.chat.config.Config;
+import gg.moonrise.chat.config.Messages;
+import gg.moonrise.chat.config.serializer.MessageSerializer;
 import gg.moonrise.engine.config.Configuration;
+import gg.moonrise.engine.message.Message;
 import gg.moonrise.engine.state.Reloadable;
 import gg.moonrise.moss.spring.SpringComponent;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import org.bukkit.command.CommandSender;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
-import java.util.List;
+import java.util.Arrays;
 
 @SpringComponent
-@RequiredArgsConstructor
 public class ConfigService implements Reloadable {
 
-    private final SpiritChatPlugin plugin;
-    private Configuration<Config.General> general;
-    private Configuration<Config.Chat> chat;
-    private Configuration<Config.Database> database;
-    private List<Configuration<?>> configurations;
-    private volatile Config config;
+    private final File dataFolder;
+    private Configuration<Config> configuration;
+    private Configuration<Messages> messages;
+
+    @Autowired
+    public ConfigService(SpiritChatPlugin plugin) {
+        this(plugin.getDataFolder());
+    }
+
+    ConfigService(File dataFolder) {
+        this.dataFolder = dataFolder;
+    }
 
     @PostConstruct
     public void init() {
-        this.general = load("general.yml", Config.General.class);
-        this.chat = load("chat.yml", Config.Chat.class);
-        this.database = load("database.yml", Config.Database.class);
-        this.configurations = List.of(
-                general,
-                chat,
-                database
-        );
-        compose();
+        ConfigFiles files = loadFiles();
+        publish(files);
     }
 
     private <T> Configuration<T> load(String fileName, Class<T> type) {
-        return Configuration.config(new File(plugin.getDataFolder(), fileName), type, builder -> {
+        return Configuration.config(new File(dataFolder, fileName), type, builder -> {
             builder.setNameFormatter(NameFormatters.LOWER_KEBAB_CASE);
+            builder.addSerializer(Message.class, new MessageSerializer());
 
             builder.inputNulls(false);
             builder.outputNulls(false);
 
             builder.header("""
-           ------------------------------------------------------------------------------------------ \s
-                       _____           _          _   _         _____   _               _  \s
-                      / ____|         (_)        (_) | |       / ____| | |             | | \s
-                     | (___    _ __    _   _ __   _  | |_     | |      | |__     __ _  | |_\s
-                      \\___ \\  | '_ \\  | | | '__| | | | __|    | |      | '_ \\   / _` | | __|
-                      ____) | | |_) | | | | |    | | | |_     | |____  | | | | | (_| | | |_\s
-                     |_____/  | .__/  |_| |_|    |_|  \\__|     \\_____| |_| |_|  \\__,_|  \\__|
-                              | |                                                          \s
-                              |_|                                                          \s
-                             \s
-            Documentation: https://github.com/moonrise-studios/spiritchat                  \s
-            MiniMessage Documentation: https://webui.advntr.dev/           \s
-           ------------------------------------------------------------------------------------------""");
+                    SpiritChat
+                    Documentation: https://github.com/moonrise-studios/spiritchat
+                    MiniMessage Documentation: https://webui.advntr.dev/
+                    """);
 
             builder.footer("""
                     Author: ericlmao
@@ -68,8 +65,8 @@ public class ConfigService implements Reloadable {
 
     @Override
     public void reload() {
-        configurations.forEach(Configuration::reload);
-        compose();
+        ConfigFiles files = loadFiles();
+        publish(files);
     }
 
     /**
@@ -77,10 +74,41 @@ public class ConfigService implements Reloadable {
      * @return The current configuration.
      */
     public Config get() {
-        return config;
+        return configuration.get();
     }
 
-    private void compose() {
-        this.config = Config.compose(general.get(), chat.get(), database.get());
+    public Messages messages() {
+        return messages.get();
+    }
+
+    public void send(CommandSender sender, Message message, TagResolver.Single... placeholders) {
+        message.send(sender, prefixedPlaceholders(sender, placeholders));
+    }
+
+    public Component component(CommandSender sender, Message message, TagResolver.Single... placeholders) {
+        return message.asComponent(sender, prefixedPlaceholders(sender, placeholders));
+    }
+
+    private TagResolver.Single[] prefixedPlaceholders(CommandSender sender, TagResolver.Single[] placeholders) {
+        TagResolver.Single[] resolved = Arrays.copyOf(placeholders, placeholders.length + 1);
+        Message prefix = messages().getPrefix();
+        Component prefixComponent = prefix == null ? Component.empty() : prefix.asComponent(sender);
+        resolved[placeholders.length] = Placeholder.component("prefix", prefixComponent);
+        return resolved;
+    }
+
+    private ConfigFiles loadFiles() {
+        return new ConfigFiles(
+                load("config.yml", Config.class),
+                load("messages.yml", Messages.class)
+        );
+    }
+
+    private void publish(ConfigFiles files) {
+        this.configuration = files.configuration();
+        this.messages = files.messages();
+    }
+
+    private record ConfigFiles(Configuration<Config> configuration, Configuration<Messages> messages) {
     }
 }

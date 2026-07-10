@@ -5,41 +5,61 @@ import de.exlll.configlib.Configuration;
 import gg.moonrise.chat.config.section.chat.AntiMessageSigningSettings;
 import gg.moonrise.chat.config.section.chat.ChatItemSettings;
 import gg.moonrise.chat.config.section.chat.GroupChatSettings;
+import gg.moonrise.chat.config.section.chat.MentionSettings;
 import gg.moonrise.chat.config.section.chat.StaticChatSettings;
 import gg.moonrise.chat.config.section.database.DatabaseSettings;
-import gg.moonrise.chat.config.section.display.PlayerDisplaySettings;
 import gg.moonrise.chat.config.section.log.LoggingSettings;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@Configuration
 public class Config {
 
-    private final General general;
-    private final PlayerDisplaySettings playerDisplaySettings;
-    private final LoggingSettings loggingSettings;
-    private final ChatItemSettings chatItemSettings;
-    private final AntiMessageSigningSettings antiMessageSigningSettings;
-    private final StaticChatSettings staticChatSettings;
-    private final GroupChatSettings groupChatSettings;
-    private final DatabaseSettings databaseSettings;
+    @Comment({
+            "General plugin behavior settings."
+    })
+    private General general = new General();
 
-    public boolean isCheckForUpdates() {
-        return general.isCheckForUpdates();
+    @Comment({
+            "",
+            "Chat formatting, mentions, chat item, and chat-signing compatibility settings."
+    })
+    private Chat chat = new Chat();
+
+    @Comment({
+            "",
+            "Persistent storage settings.",
+            "SpiritChat uses this storage for player options and chat logs.",
+            "SQLite is the default and stores data in the plugin folder."
+    })
+    private Storage storage = new Storage();
+
+    public LoggingSettings getLoggingSettings() {
+        return general.getLoggingSettings();
     }
 
-    public static Config compose(General general, Chat chat, Database database) {
-        return new Config(
-                general,
-                general.getPlayerDisplaySettings(),
-                general.getLoggingSettings(),
-                chat.getChatItemSettings(),
-                chat.getAntiMessageSigningSettings(),
-                chat.getStaticChatSettings(),
-                chat.getGroupChatSettings(),
-                database.getDatabaseSettings()
-        );
+    public ChatItemSettings getChatItemSettings() {
+        return chat.getChatItemSettings();
+    }
+
+    public MentionSettings getMentionSettings() {
+        return chat.getMentionSettings();
+    }
+
+    public AntiMessageSigningSettings getAntiMessageSigningSettings() {
+        return chat.getAntiMessageSigningSettings();
+    }
+
+    public StaticChatSettings getStaticChatSettings() {
+        return chat.getStaticChatSettings();
+    }
+
+    public GroupChatSettings getGroupChatSettings() {
+        return chat.getGroupChatSettings();
+    }
+
+    public DatabaseSettings getDatabaseSettings() {
+        return storage.getDatabaseSettings();
     }
 
     @Getter
@@ -47,21 +67,8 @@ public class Config {
     public static class General {
 
         @Comment({
-                "Whether or not to check for updates.",
-                " ",
-                "Default: true"
-        })
-        private boolean checkForUpdates = true;
-
-        @Comment({
-                "",
-                "Settings for player display"
-        })
-        private PlayerDisplaySettings playerDisplaySettings = new PlayerDisplaySettings();
-
-        @Comment({
-                "",
-                "Chat logging settings"
+                "Chat log storage settings.",
+                "When enabled, messages are written to the configured database."
         })
         private LoggingSettings loggingSettings = new LoggingSettings();
     }
@@ -71,35 +78,48 @@ public class Config {
     public static class Chat {
 
         @Comment({
-                "Settings for chat item formatting"
+                "Chat item formatting settings.",
+                "Allows players to show their held item in chat with configured placeholders."
         })
         private ChatItemSettings chatItemSettings = new ChatItemSettings();
 
         @Comment({
                 "",
-                "Settings for anti-message-signing chat packet rewriting"
+                "Player mention settings.",
+                "Controls @PlayerName highlighting and ping notifications."
+        })
+        private MentionSettings mentionSettings = new MentionSettings();
+
+        @Comment({
+                "",
+                "Chat-signing compatibility settings.",
+                "Keeps SpiritChat formatted messages compatible with modern clients and report-disabling client mods."
         })
         private AntiMessageSigningSettings antiMessageSigningSettings = new AntiMessageSigningSettings();
 
         @Comment({
                 "",
-                "Settings for static chat formatting"
+                "Static chat formatting settings.",
+                "Used when every player should share the same chat format."
         })
         private StaticChatSettings staticChatSettings = new StaticChatSettings();
 
         @Comment({
                 "",
-                "Settings for group chat formatting"
+                "Group chat formatting settings.",
+                "Used when chat formats should be selected from the player's LuckPerms group."
         })
         private GroupChatSettings groupChatSettings = new GroupChatSettings();
     }
 
     @Getter
     @Configuration
-    public static class Database {
+    public static class Storage {
 
         @Comment({
-                "Database connection settings"
+                "Database connection settings.",
+                "Default SQLite creates a local storage.db file.",
+                "External SQL databases can be configured here when needed."
         })
         private DatabaseSettings databaseSettings = new DatabaseSettings();
     }

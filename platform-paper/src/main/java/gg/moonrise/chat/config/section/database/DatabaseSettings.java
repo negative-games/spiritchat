@@ -8,18 +8,22 @@ import lombok.Getter;
 @Configuration
 public class DatabaseSettings {
 
+    public static final int MIN_POOL_SIZE = 1;
+    public static final int MAX_POOL_SIZE = 30;
+
     @Comment({
             "",
-            "The type of database to use for storage purposes.",
-            "Options: SQLITE, MYSQL, MARIA, POSTGRESQL",
-            " " ,
+            "Database type for player options and chat logs.",
+            "Options: SQLITE, MYSQL, MARIADB, POSTGRESQL",
+            " ",
             "Default: SQLITE"
     })
     private DatabaseType type = DatabaseType.SQLITE;
 
     @Comment({
             "",
-            "The host of the SQL database.",
+            "External database host.",
+            "Ignored when type is SQLITE.",
             " ",
             "Default: localhost"
     })
@@ -27,7 +31,8 @@ public class DatabaseSettings {
 
     @Comment({
             "",
-            "The port of the SQL database.",
+            "External database port.",
+            "Ignored when type is SQLITE.",
             " ",
             "Default: 3306"
     })
@@ -35,25 +40,42 @@ public class DatabaseSettings {
 
     @Comment({
             "",
-            "The name of the SQL database.",
+            "Database name.",
+            "For SQLITE, this is the file name inside the SpiritChat plugin folder.",
             " ",
-            "Default: spiritchat_db"
+            "Default: storage.db"
     })
-    private String database = "spiritchat_db";
+    private String database = "storage.db";
 
     @Comment({
             "",
-            "The username for the SQL database.",
+            "External database username.",
+            "Ignored when type is SQLITE.",
             " ",
-            "Default: root"
+            "Default: spiritchat"
     })
-    private String username = "root";
+    private String username = "spiritchat";
 
     @Comment({
             "",
-            "The password for the SQL database.",
+            "External database password.",
+            "Ignored when type is SQLITE.",
             " ",
-            "Default: password"
+            "Default: change-me"
     })
-    private String password = "password";
+    private String password = "change-me";
+
+    @Comment({
+            "",
+            "The maximum number of pooled connections.",
+            "SQLite always uses a single connection.",
+            "External SQL values are clamped between 1 and 30.",
+            " ",
+            "Default: 10"
+    })
+    private int poolSize = 10;
+
+    public int boundedPoolSize() {
+        return Math.clamp(poolSize, MIN_POOL_SIZE, MAX_POOL_SIZE);
+    }
 }

@@ -1,31 +1,45 @@
 package gg.moonrise.chat.command;
 
-import gg.moonrise.chat.SpiritChatPlugin;
+import gg.moonrise.chat.service.ConfigService;
+import gg.moonrise.chat.util.PlatformTasks;
 import gg.moonrise.engine.paper.command.PaperCommand;
 import gg.moonrise.moss.spring.SpringComponent;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.command.CommandSender;
+import org.incendo.cloud.annotation.specifier.Greedy;
+import org.incendo.cloud.annotations.Argument;
 import org.incendo.cloud.annotations.Command;
-import org.incendo.cloud.annotations.Permission;
 
 @SpringComponent
 @RequiredArgsConstructor
 public class CommandSpiritChat implements PaperCommand {
 
-    private final SpiritChatPlugin plugin;
+    private final ConfigService configService;
 
-    @Command("spiritchat")
-    @Permission("spiritchat.admin")
+    @Command("chat|spiritchat")
     public void execute(CommandSourceStack source) {
-        source.getSender().sendMessage(Component.text("SpiritChat").color(NamedTextColor.AQUA));
+        sendHelp(source.getSender());
     }
 
-    @Command("spiritchat reload")
-    @Permission("spiritchat.admin")
-    public void reload(CommandSourceStack source) {
-        plugin.reload();
-        source.getSender().sendMessage(Component.text("SpiritChat reloaded.").color(NamedTextColor.GREEN));
+    @Command("chat|spiritchat help")
+    public void help(CommandSourceStack source) {
+        sendHelp(source.getSender());
+    }
+
+    @Command("chat|spiritchat <extra>")
+    public void unknown(CommandSourceStack source, @Argument("extra") @Greedy String extra) {
+        sendHelp(source.getSender());
+    }
+
+    private void sendHelp(CommandSender sender) {
+        PlatformTasks.run(sender, () -> {
+            if (sender.hasPermission("spiritchat.admin")) {
+                configService.send(sender, configService.messages().getGeneral().getAdminHelp());
+                return;
+            }
+
+            configService.send(sender, configService.messages().getGeneral().getHelp());
+        });
     }
 }
