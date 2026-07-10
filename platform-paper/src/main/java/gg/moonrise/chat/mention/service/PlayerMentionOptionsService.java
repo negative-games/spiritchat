@@ -1,10 +1,9 @@
 package gg.moonrise.chat.mention.service;
 
-import gg.moonrise.chat.config.section.chat.MentionSettings;
 import gg.moonrise.chat.config.ConfigService;
+import gg.moonrise.chat.config.section.chat.MentionSettings;
 import gg.moonrise.chat.mention.cache.MentionPreferenceCache;
 import gg.moonrise.chat.storage.PlayerOptionsRepository;
-import gg.moonrise.engine.state.Reloadable;
 import gg.moonrise.moss.spring.Disableable;
 import gg.moonrise.moss.spring.SpringComponent;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @SpringComponent
 @RequiredArgsConstructor
-public class PlayerMentionOptionsService implements Disableable, Reloadable {
+public class PlayerMentionOptionsService implements Disableable {
 
     private final ConfigService configService;
     private final PlayerOptionsRepository repository;
@@ -55,11 +54,6 @@ public class PlayerMentionOptionsService implements Disableable, Reloadable {
 
     public void invalidate(Player player) {
         mentionPinging.invalidate(player.getUniqueId());
-    }
-
-    @Override
-    public void reload() {
-        // Keep already loaded options across config reloads. Online players are preloaded by MentionService.
     }
 
     @Override

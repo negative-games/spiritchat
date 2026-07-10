@@ -1,7 +1,7 @@
 package gg.moonrise.chat.mention.command;
 
-import gg.moonrise.chat.config.section.chat.MentionSettings;
 import gg.moonrise.chat.config.ConfigService;
+import gg.moonrise.chat.config.section.chat.MentionSettings;
 import gg.moonrise.chat.mention.service.PlayerMentionOptionsService;
 import gg.moonrise.chat.util.PlatformTasks;
 import gg.moonrise.engine.paper.command.PaperCommand;
@@ -15,19 +15,21 @@ import org.incendo.cloud.annotations.Command;
 import org.incendo.cloud.annotations.suggestion.Suggestions;
 import org.incendo.cloud.context.CommandContext;
 
+import java.util.List;
 import java.util.Locale;
-import java.util.stream.Stream;
 
 @SpringComponent
 @RequiredArgsConstructor
 public class CommandSpiritChatMentions implements PaperCommand {
+
+    private static final List<String> STATES = List.of("on", "off");
 
     private final ConfigService configService;
     private final PlayerMentionOptionsService mentionOptionsService;
 
     @Command("chat|spiritchat mentions")
     public void usage(CommandSourceStack source) {
-        PlatformTasks.run(source.getSender(), () -> configService.send(source.getSender(), configService.messages().getMentions().getUsage()));
+        sendUsage(source);
     }
 
     @Command("chat|spiritchat mentions <state>")
@@ -53,7 +55,7 @@ public class CommandSpiritChatMentions implements PaperCommand {
         }
 
         String normalized = state.toLowerCase(Locale.ROOT);
-        if (!normalized.equals("on") && !normalized.equals("off")) {
+        if (!STATES.contains(normalized)) {
             configService.send(player, configService.messages().getMentions().getUsage());
             return;
         }
@@ -85,14 +87,18 @@ public class CommandSpiritChatMentions implements PaperCommand {
 
     @Command("chat|spiritchat mentions <state> <extra>")
     public void usage(CommandSourceStack source, @Argument(value = "state", suggestions = "mention-states") String state, @Argument("extra") @Greedy String extra) {
-        PlatformTasks.run(source.getSender(), () -> configService.send(source.getSender(), configService.messages().getMentions().getUsage()));
+        sendUsage(source);
     }
 
     @Suggestions("mention-states")
     public Iterable<String> mentionStateSuggestions(CommandContext<CommandSourceStack> context, String input) {
         String normalized = input == null ? "" : input.toLowerCase(Locale.ROOT);
-        return Stream.of("on", "off")
+        return STATES.stream()
                 .filter(state -> normalized.isBlank() || state.startsWith(normalized))
                 .toList();
+    }
+
+    private void sendUsage(CommandSourceStack source) {
+        PlatformTasks.run(source.getSender(), () -> configService.send(source.getSender(), configService.messages().getMentions().getUsage()));
     }
 }

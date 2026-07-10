@@ -41,7 +41,6 @@ public class MentionService implements Listener, Reloadable {
 
     private final ConfigService configService;
     private final PlayerMentionOptionsService optionsService;
-    private final Map<UUID, MentionTarget> targetsById = new ConcurrentHashMap<>();
     private final Map<String, MentionTarget> targetsByName = new ConcurrentHashMap<>();
     private volatile MentionSound mentionSound;
 
@@ -53,7 +52,6 @@ public class MentionService implements Listener, Reloadable {
     @Override
     public void reload() {
         mentionSound = sound(configService.get().getMentionSettings());
-        targetsById.clear();
         targetsByName.clear();
         for (Player player : Bukkit.getOnlinePlayers()) {
             track(player);
@@ -71,7 +69,7 @@ public class MentionService implements Listener, Reloadable {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        untrack(player.getUniqueId());
+        targetsByName.remove(normalizeName(player.getName()));
         optionsService.invalidate(player);
     }
 
@@ -165,22 +163,12 @@ public class MentionService implements Listener, Reloadable {
     }
 
     private void track(Player player) {
-        untrack(player.getUniqueId());
-
         MentionTarget target = new MentionTarget(
                 player.getUniqueId(),
                 player.getName(),
                 mentionPattern(player.getName())
         );
-        targetsById.put(player.getUniqueId(), target);
         targetsByName.put(normalizeName(player.getName()), target);
-    }
-
-    private void untrack(UUID playerId) {
-        MentionTarget target = targetsById.remove(playerId);
-        if (target != null) {
-            targetsByName.remove(normalizeName(target.playerName()), target);
-        }
     }
 
     private Set<MentionTarget> mentionedTargets(String input) {

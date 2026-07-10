@@ -3,8 +3,6 @@ package gg.moonrise.chat.lifecycle;
 import gg.moonrise.chat.chat.listener.ChatListener;
 import gg.moonrise.chat.config.ConfigService;
 import gg.moonrise.chat.mention.service.MentionService;
-import gg.moonrise.chat.mention.service.OnlinePlayerNameService;
-import gg.moonrise.chat.mention.service.PlayerMentionOptionsService;
 import gg.moonrise.chat.signing.service.AntiMessageSigningService;
 import gg.moonrise.chat.storage.SqlStorageService;
 import gg.moonrise.moss.spring.SpringComponent;
@@ -21,8 +19,6 @@ public class SpiritChatReloadService {
 
     private final ConfigService configService;
     private final SqlStorageService sqlStorageService;
-    private final PlayerMentionOptionsService playerMentionOptionsService;
-    private final OnlinePlayerNameService onlinePlayerNameService;
     private final MentionService mentionService;
     private final AntiMessageSigningService antiMessageSigningService;
     private final ChatListener chatListener;
@@ -48,8 +44,6 @@ public class SpiritChatReloadService {
     private List<ReloadStep> reloadSteps() {
         return List.of(
                 new ReloadStep("SQL storage", sqlStorageService::reload),
-                new ReloadStep("player mention options", playerMentionOptionsService::reload),
-                new ReloadStep("online player names", onlinePlayerNameService::reload),
                 new ReloadStep("mentions", mentionService::reload),
                 new ReloadStep("anti-message-signing", antiMessageSigningService::reload),
                 new ReloadStep("chat renderer", chatListener::reload)

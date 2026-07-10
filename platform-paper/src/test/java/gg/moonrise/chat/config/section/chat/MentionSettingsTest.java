@@ -17,6 +17,14 @@ class MentionSettingsTest {
     }
 
     @Test
+    void fallsBackToDefaultHighlightFormatWhenMalformedConfigSetsBlank() throws Exception {
+        MentionSettings settings = new MentionSettings();
+        setField(settings, "highlightFormat", " ");
+
+        assertEquals("<yellow><mention></yellow>", settings.effectiveHighlightFormat());
+    }
+
+    @Test
     void treatsNullSoundAsDisabledSound() throws Exception {
         MentionSettings settings = new MentionSettings();
         setField(settings, "sound", null);

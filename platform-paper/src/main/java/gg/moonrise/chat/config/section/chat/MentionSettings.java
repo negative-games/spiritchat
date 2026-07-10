@@ -92,7 +92,7 @@ public class MentionSettings {
     private double soundPitch = 1.2D;
 
     public String effectiveHighlightFormat() {
-        return highlightFormat == null ? DEFAULT_HIGHLIGHT_FORMAT : highlightFormat;
+        return highlightFormat == null || highlightFormat.isBlank() ? DEFAULT_HIGHLIGHT_FORMAT : highlightFormat;
     }
 
     public String effectiveSound() {
