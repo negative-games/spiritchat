@@ -1,168 +1,145 @@
 # SpiritChat
 
-**SpiritChat** is a Paper chat formatting plugin for servers that want clean, configurable chat without a painful setup process.
+**SpiritChat** makes Minecraft chat look cleaner, feel more alive, and stay easier to manage.
 
-SpiritChat is open source and currently in beta. The core chat formatting, mentions, chat item showcases, and logging features are usable today, while larger social and cosmetic systems are planned as the plugin grows.
+It gives you the basics a server chat plugin should have without making setup painful: good-looking formats, rank-based styles, player mentions, item showcases, and useful staff tools. SpiritChat is open source, currently in beta, and growing into a wider chat and cosmetic system.
 
-## At a Glance
+## What It Does
 
-- Static server-wide chat formatting
-- Optional LuckPerms group-based chat formats
-- PlaceholderAPI support in configured formats and messages
-- Safe legacy `&` chat colors for players with permission
-- `@PlayerName` mention highlights, sounds, and action bar alerts
-- Database-backed per-player mention ping preferences
-- Held-item showcase placeholders
-- Optional database-backed chat logs with paginated lookup commands
-- Separate `config.yml` and `messages.yml`
-- Chat-signing compatibility for modern Minecraft clients
+- Give your server a clean chat style out of the box
+- Make ranks stand out with LuckPerms group formats
+- Use PlaceholderAPI to show names, ranks, prefixes, stats, and more
+- Let trusted players use legacy `&` colors
+- Ping players with `@PlayerName` mentions
+- Let players turn their own mention pings on or off
+- Show held items directly in chat
+- Keep optional chat logs for staff
+- Customize the wording players see
+- Reduce modern signed-chat headaches
 
-## Dependencies
+## Chat That Matches Your Server
 
-- **Paper 1.21.8+**
-- **Java 21+**
-- **[PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/)** - required placeholder support
-
-## Optional Dependencies
-
-- **[LuckPerms](https://luckperms.net/)** - optional group-based chat formats
-
-## Main Features
-
-### Chat Formatting
-
-SpiritChat can use one static chat format for the whole server, or select a format from the sender's LuckPerms groups.
+Use one simple format for everyone, or give different groups their own look. Staff, VIPs, members, and special ranks can all have chat styles that fit their role on your server.
 
 ![Static chat format](https://raw.githubusercontent.com/moonrise-studios/spiritchat/revision/v1/docs/modrinth/static-chat.png)
 
 ![LuckPerms group chat format](https://raw.githubusercontent.com/moonrise-studios/spiritchat/revision/v1/docs/modrinth/group-chat.png)
 
 <details>
-<summary>Format Options</summary>
+<summary>More about chat formatting</summary>
 
-Static chat is the default mode and takes priority when it is enabled. Group chat can be enabled when different ranks or groups should have different chat styles.
+You can keep chat simple with one format for everyone, or use LuckPerms groups when ranks should look different.
 
-Configured formats use MiniMessage placeholders such as:
+Formats can use placeholders like:
 
 - `<player>`
 - `<message>`
 
-Player-entered MiniMessage tags are stripped from normal chat text so players cannot inject format placeholders or arbitrary MiniMessage styling through their own messages.
-
-Players with `spiritchat.chat-colors` can use legacy `&` color codes in chat.
+You can also allow trusted players to use legacy `&` color codes in chat.
 
 </details>
 
-### Mentions
+## Mentions Players Notice
 
-Mention another online player with `@PlayerName` to highlight their name and notify them.
+When someone types `@PlayerName`, SpiritChat can highlight the mention, play a sound, and show an action bar message. It helps busy chats feel more responsive without needing a full social plugin.
 
 ![Mention highlight and action bar notification](https://raw.githubusercontent.com/moonrise-studios/spiritchat/revision/v1/docs/modrinth/mentions.png)
 
 <details>
-<summary>Mention Options</summary>
+<summary>More about mentions</summary>
 
 Mentions can:
 
-- Highlight the matched player name in chat
-- Play a configurable sound
+- Highlight the player name in chat
+- Play a sound
 - Send an action bar notification
-- Let players toggle their own pings with `/chat mentions <on|off>`
+- Be toggled by players with `/chat mentions <on|off>`
 
-Player mention preferences are stored in the configured database. SQLite is used by default.
+Player mention preferences are saved between restarts.
 
 </details>
 
-### Chat Items
+## Show Items In Chat
 
-Players can show their held item in chat with configured placeholders.
+Players can show what they are holding directly in chat. It is useful for trading, showing off gear, sharing loot, or just making chat feel a little more interactive.
 
 ![Held item showcase with hover details](https://raw.githubusercontent.com/moonrise-studios/spiritchat/revision/v1/docs/modrinth/chat-item.png)
 
 <details>
-<summary>Chat Item Placeholders</summary>
+<summary>More about item showcases</summary>
 
-Default placeholders:
+Default item placeholders:
 
 - `<i>`
 - `<item>`
 
-Players need `spiritchat.chatitem` to use chat item showcases.
+Players need `spiritchat.chatitem` to use item showcases.
 
-Escaped placeholders, such as `\<item>`, are left as normal text. Empty-hand materials are blocked by default, and reserved placeholders such as `<message>`, `<player>`, and `<mention>` cannot be used as chat item placeholders.
+Escaped placeholders, such as `\<item>`, are sent as normal text. Empty-hand items are blocked by default.
 
 </details>
 
-### Chat Logs
+## Staff Chat Logs
 
-SpiritChat can store chat logs for staff review.
+If chat logs are enabled, staff can look up recent messages in game with paginated commands. It is a quicker way to check context when chat moves fast.
 
 ![Paginated chat log lookup](https://raw.githubusercontent.com/moonrise-studios/spiritchat/revision/v1/docs/modrinth/chat-logs.png)
 
 <details>
-<summary>Log Storage and Lookup</summary>
+<summary>More about chat logs</summary>
 
-Chat logs are optional and disabled by default. When enabled, SpiritChat stores plain-text chat rows in the configured database.
+Chat logs are optional and disabled by default, so you only use them if they make sense for your server.
 
-Supported storage types:
+Storage options:
 
 - SQLite
 - MySQL
 - MariaDB
 - PostgreSQL
 
-Stored log rows include:
-
-- Sender UUID
-- Sender name
-- Message
-- World
-- Server time
-
-Staff can query recent logs, logs by player name, or logs by UUID with paginated commands.
+Staff can look up recent messages, search by player name, or search by UUID.
 
 </details>
 
-### Configuration
+## Easy To Shape Around Your Server
 
-SpiritChat keeps configuration split by purpose.
+Change the chat style, mention alerts, item showcase words, staff messages, and plugin prefix so SpiritChat feels like part of your server, not a bolted-on extra.
 
 ![Configurable chat formatting](https://raw.githubusercontent.com/moonrise-studios/spiritchat/revision/v1/docs/modrinth/config-formatting.png)
 
 <details>
-<summary>Configuration Files</summary>
+<summary>What can be customized?</summary>
 
-`config.yml` controls:
+You can customize:
 
-- Chat formatting
-- Mentions
-- Chat item placeholders
-- Chat-signing compatibility
+- Chat formats
+- Mention alerts
+- Item showcase placeholders
 - Chat logs
 - Storage
-
-`messages.yml` controls player-facing messages. Messages can use the global `<prefix>` placeholder when they should include the configured prefix.
-
-</details>
-
-### Roadmap
-
-SpiritChat is planned to grow into a larger chat-management plugin.
-
-<details>
-<summary>Planned Cosmetic Features</summary>
-
-Planned chat color options include:
-
-- Hex colors
-- Legacy colors
-- Gradients
-- Presets
-- Player-made presets
-
-Name colors are planned with the same style options, giving servers more room for rank perks, cosmetics, and player identity.
+- Modern chat compatibility
+- Player-facing messages
 
 </details>
+
+## Roadmap
+
+SpiritChat is starting with the core chat experience first. From there, the plan is to grow into more cosmetic and interactive chat features.
+
+Planned additions include:
+
+- Chat colors with hex, legacy colors, gradients, presets, and player-made presets
+- Name colors with the same style options
+- Chat games
+
+Follow development, report issues, or contribute on [GitHub](https://github.com/moonrise-studios/spiritchat).
+
+## Requirements
+
+- **Paper 1.21.8+**
+- **Java 21+**
+- **[PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/)** is required
+- **[LuckPerms](https://luckperms.net/)** is optional for group chat formats
 
 ## Commands
 
@@ -191,10 +168,12 @@ spiritchat.chat-colors
 spiritchat.chatitem
 ```
 
-## Notes
+## Modern Chat Support
 
-SpiritChat includes compatibility options for modern signed-chat clients. By default, it rewrites formatted outgoing player chat as unreportable system chat and advertises report prevention in the server list status response for clients that understand it.
+Modern Minecraft chat can be awkward when a plugin changes how messages look. SpiritChat includes compatibility options to help formatted chat behave properly for modern clients.
 
-SpiritChat cannot override Paper's secure-profile enforcement. If players use clients that do not send profile public keys or chat signatures, set `enforce-secure-profile=false` in `server.properties` and restart the server.
+There is one server setting to know about: SpiritChat cannot override Paper's secure-profile enforcement. If players use clients that do not send profile public keys or chat signatures, set `enforce-secure-profile=false` in `server.properties` and restart the server.
 
-Because SpiritChat is still in beta, test new releases and config changes on a staging server before rolling them out to a live network.
+## Beta Note
+
+SpiritChat is still in beta. Test new releases and config changes on a staging server before rolling them out to a live network.
