@@ -43,7 +43,7 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
     private final Set<Channel> channels = ConcurrentHashMap.newKeySet();
     private final AtomicInteger lifecycleGeneration = new AtomicInteger();
     private Object listener;
-    private volatile AntiMessageSigningSettings activeSettings;
+    private volatile MessageSigningOptions activeOptions;
     private volatile boolean secureProfileEnforced;
 
     @Override
@@ -62,54 +62,57 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
 
         AntiMessageSigningSettings settings = config.get().getAntiMessageSigningSettings();
         if (!settings.isEnabled()) {
-            activeSettings = null;
+            activeOptions = null;
             secureProfileEnforced = false;
             log.info("Chat-signing compatibility is disabled.");
             return;
         }
 
         if (!settings.hasAnyActiveFeature()) {
-            activeSettings = null;
+            activeOptions = null;
             secureProfileEnforced = false;
             log.info("Chat-signing compatibility is enabled, but all compatibility features are disabled.");
             return;
         }
 
-        if (!validateCompatibility(settings)) {
-            activeSettings = null;
+        CompatibleSigningFeatures features = compatibleFeatures(settings);
+        if (!features.any()) {
+            activeOptions = null;
             secureProfileEnforced = false;
             log.warn("Chat-signing compatibility was not enabled because no configured feature is compatible with this server build.");
             return;
         }
 
         try {
-            register(settings);
-            activeSettings = settings;
+            MessageSigningOptions options = register(settings, features);
+            activeOptions = options;
             secureProfileEnforced = isSecureProfileEnforced();
             log.info(
                     "Chat-signing compatibility enabled: rewrite-player-chat={}, send-prevents-chat-reports-to-client={}, claim-secure-chat-enforced={}, bedrock-only={}.",
-                    settings.isRewritePlayerChat(),
-                    settings.isSendPreventsChatReportsToClient(),
-                    settings.isClaimSecureChatEnforced(),
-                    settings.isBedrockOnly()
+                    options.rewritePlayerChat(),
+                    options.sendPreventsChatReportsToClient(),
+                    options.claimSecureChatEnforced(),
+                    options.bedrockOnly()
             );
             log.info(UNSIGNED_CHAT_HELP);
             if (secureProfileEnforced) {
                 log.warn(SECURE_PROFILE_WARNING);
             }
         } catch (ReflectiveOperationException exception) {
-            activeSettings = null;
+            activeOptions = null;
             secureProfileEnforced = false;
             log.error("Failed to enable chat-signing compatibility.", exception);
         }
     }
 
-    private boolean validateCompatibility(AntiMessageSigningSettings settings) {
-        boolean valid = false;
+    private CompatibleSigningFeatures compatibleFeatures(AntiMessageSigningSettings settings) {
+        boolean rewritePlayerChat = false;
+        boolean sendPreventsChatReportsToClient = false;
+        boolean claimSecureChatEnforced = false;
 
         if (settings.isRewritePlayerChat()) {
             if (AntiMessageSigningPacketHandler.isChatRewriteSupported()) {
-                valid = true;
+                rewritePlayerChat = true;
             } else {
                 log.warn("Configured chat-signing feature rewrite-player-chat is not compatible with this server's chat packet implementation.");
             }
@@ -117,7 +120,7 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
 
         if (settings.isSendPreventsChatReportsToClient()) {
             if (AntiMessageSigningPacketHandler.isStatusRewriteSupported()) {
-                valid = true;
+                sendPreventsChatReportsToClient = true;
             } else {
                 log.warn("Configured chat-signing feature send-prevents-chat-reports-to-client is not compatible with this server's status packet implementation.");
             }
@@ -125,23 +128,26 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
 
         if (settings.isClaimSecureChatEnforced()) {
             if (AntiMessageSigningPacketHandler.isLoginRewriteSupported()) {
-                valid = true;
+                claimSecureChatEnforced = true;
             } else {
                 log.warn("Configured chat-signing feature claim-secure-chat-enforced is not compatible with this server's login packet implementation.");
             }
         }
 
-        return valid;
+        return new CompatibleSigningFeatures(
+                rewritePlayerChat,
+                sendPreventsChatReportsToClient,
+                claimSecureChatEnforced
+        );
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        AntiMessageSigningSettings settings = activeSettings;
-        if (settings == null) return;
+        MessageSigningOptions options = activeOptions;
+        if (options == null) return;
 
-        int generation = lifecycleGeneration.get();
         PlatformTasks.run(event.getPlayer(), () -> PlayerChannelResolver.resolve(event.getPlayer())
-                .ifPresent(channel -> injectHandler(channel, settings, generation)));
+                .ifPresent(channel -> injectHandler(channel, options)));
 
         if (secureProfileEnforced) {
             PlatformTasks.run(event.getPlayer(), () -> {
@@ -152,11 +158,12 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
         }
     }
 
-    private void register(AntiMessageSigningSettings settings) throws ReflectiveOperationException {
+    private MessageSigningOptions register(AntiMessageSigningSettings settings, CompatibleSigningFeatures features) throws ReflectiveOperationException {
         Class<?> holder = Class.forName("io.papermc.paper.network.ChannelInitializeListenerHolder");
         Class<?> listenerType = Class.forName("io.papermc.paper.network.ChannelInitializeListener");
         Method addListener = holder.getMethod("addListener", Key.class, listenerType);
         int generation = lifecycleGeneration.incrementAndGet();
+        MessageSigningOptions options = features.options(settings.isBedrockOnly(), generation);
 
         listener = Proxy.newProxyInstance(
                 listenerType.getClassLoader(),
@@ -168,7 +175,7 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
 
                     if (args != null && args.length == 1 && args[0] instanceof Channel channel) {
                         try {
-                            injectHandler(channel, settings, generation);
+                            injectHandler(channel, options);
                         } catch (RuntimeException exception) {
                             log.warn("Failed to inject anti-message-signing packet handler for a player connection.", exception);
                         }
@@ -178,14 +185,15 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
         );
 
         addListener.invoke(null, LISTENER_KEY, listener);
-        injectOnlinePlayers(settings, generation);
+        injectOnlinePlayers(options);
+        return options;
     }
 
-    private void injectOnlinePlayers(AntiMessageSigningSettings settings, int generation) {
+    private void injectOnlinePlayers(MessageSigningOptions options) {
         PlatformTasks.runGlobal(() -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 PlayerChannelResolver.resolve(player)
-                        .ifPresent(channel -> injectHandler(channel, settings, generation));
+                        .ifPresent(channel -> injectHandler(channel, options));
             }
         });
     }
@@ -205,25 +213,25 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
         } finally {
             removeInjectedHandlers(invalidBeforeGeneration);
             listener = null;
-            activeSettings = null;
+            activeOptions = null;
         }
     }
 
-    private void injectHandler(Channel channel, AntiMessageSigningSettings settings, int generation) {
-        if (generation != lifecycleGeneration.get() || !channel.isOpen()) {
+    private void injectHandler(Channel channel, MessageSigningOptions options) {
+        if (options.generation() != lifecycleGeneration.get() || !channel.isOpen()) {
             return;
         }
 
         if (!channel.eventLoop().inEventLoop()) {
-            channel.eventLoop().execute(() -> injectHandler(channel, settings, generation, 2));
+            channel.eventLoop().execute(() -> injectHandler(channel, options, 2));
             return;
         }
 
-        injectHandler(channel, settings, generation, 2);
+        injectHandler(channel, options, 2);
     }
 
-    private void injectHandler(Channel channel, AntiMessageSigningSettings settings, int generation, int attemptsRemaining) {
-        if (generation != lifecycleGeneration.get() || !channel.isOpen()) {
+    private void injectHandler(Channel channel, MessageSigningOptions options, int attemptsRemaining) {
+        if (options.generation() != lifecycleGeneration.get() || !channel.isOpen()) {
             return;
         }
 
@@ -233,7 +241,7 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
 
         if (channel.pipeline().get("packet_handler") == null) {
             if (attemptsRemaining > 0) {
-                channel.eventLoop().execute(() -> injectHandler(channel, settings, generation, attemptsRemaining - 1));
+                channel.eventLoop().execute(() -> injectHandler(channel, options, attemptsRemaining - 1));
                 return;
             }
 
@@ -244,7 +252,7 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
         channel.pipeline().addAfter(
                 "packet_handler",
                 AntiMessageSigningPacketHandler.HANDLER_NAME,
-                new AntiMessageSigningPacketHandler(options(settings, generation))
+                new AntiMessageSigningPacketHandler(options)
         );
         channels.add(channel);
         channel.closeFuture().addListener(future -> channels.remove(channel));
@@ -283,16 +291,6 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
         };
     }
 
-    private MessageSigningOptions options(AntiMessageSigningSettings settings, int generation) {
-        return new MessageSigningOptions(
-                settings.isRewritePlayerChat() && AntiMessageSigningPacketHandler.isChatRewriteSupported(),
-                settings.isClaimSecureChatEnforced() && AntiMessageSigningPacketHandler.isLoginRewriteSupported(),
-                settings.isSendPreventsChatReportsToClient() && AntiMessageSigningPacketHandler.isStatusRewriteSupported(),
-                settings.isBedrockOnly(),
-                generation
-        );
-    }
-
     private boolean isSecureProfileEnforced() {
         try {
             Object craftServer = Bukkit.getServer();
@@ -301,6 +299,27 @@ public class AntiMessageSigningService implements Listener, Enableable, Disablea
         } catch (ReflectiveOperationException | RuntimeException exception) {
             log.debug("Could not determine enforce-secure-profile state.", exception);
             return false;
+        }
+    }
+
+    private record CompatibleSigningFeatures(
+            boolean rewritePlayerChat,
+            boolean sendPreventsChatReportsToClient,
+            boolean claimSecureChatEnforced
+    ) {
+
+        private boolean any() {
+            return rewritePlayerChat || sendPreventsChatReportsToClient || claimSecureChatEnforced;
+        }
+
+        private MessageSigningOptions options(boolean bedrockOnly, int generation) {
+            return new MessageSigningOptions(
+                    rewritePlayerChat,
+                    claimSecureChatEnforced,
+                    sendPreventsChatReportsToClient,
+                    bedrockOnly,
+                    generation
+            );
         }
     }
 }
