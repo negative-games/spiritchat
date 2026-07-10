@@ -24,7 +24,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 @SpringComponent
 @RequiredArgsConstructor
 public class SqlStorageService implements Disableable, Reloadable {

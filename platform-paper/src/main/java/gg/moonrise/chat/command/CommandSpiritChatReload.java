@@ -13,7 +13,7 @@ import org.incendo.cloud.annotations.Argument;
 import org.incendo.cloud.annotations.Command;
 import org.incendo.cloud.annotations.Permission;
 
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 @SpringComponent
 @RequiredArgsConstructor
 public class CommandSpiritChatReload implements PaperCommand {

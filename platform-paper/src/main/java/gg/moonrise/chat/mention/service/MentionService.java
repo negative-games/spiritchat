@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 @SpringComponent
 @RequiredArgsConstructor
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 public class MentionService implements Listener, Reloadable {
 
     private static final String NAME_BOUNDARY = "[A-Za-z0-9_]";

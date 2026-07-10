@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @SpringComponent
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 public class LuckPermsService implements Enableable {
 
     private volatile LuckPermsAccess luckPerms;

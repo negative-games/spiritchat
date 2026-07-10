@@ -15,7 +15,7 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 @SpringComponent
 @RequiredArgsConstructor
 public class ChatLogService {

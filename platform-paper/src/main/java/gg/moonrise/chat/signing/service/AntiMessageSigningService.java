@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringComponent
 @RequiredArgsConstructor
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 public class AntiMessageSigningService implements Listener, Enableable, Disableable, Reloadable {
 
     private static final Key LISTENER_KEY = Key.key("spiritchat", "anti_message_signing");

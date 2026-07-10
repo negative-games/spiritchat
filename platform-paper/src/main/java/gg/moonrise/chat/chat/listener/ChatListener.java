@@ -27,7 +27,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 @SpringComponent
 @RequiredArgsConstructor
 public class ChatListener implements Listener, Enableable, Disableable, Reloadable {

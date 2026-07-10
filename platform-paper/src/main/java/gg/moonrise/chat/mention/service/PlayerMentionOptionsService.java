@@ -13,7 +13,7 @@ import org.bukkit.entity.Player;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 @SpringComponent
 @RequiredArgsConstructor
 public class PlayerMentionOptionsService implements Disableable {

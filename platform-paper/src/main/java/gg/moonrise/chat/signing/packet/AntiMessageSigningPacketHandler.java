@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+@Slf4j(topic = "SpiritChat")
 public final class AntiMessageSigningPacketHandler extends ChannelDuplexHandler {
 
     public static final String HANDLER_NAME = "spiritchat_anti_message_signing";
