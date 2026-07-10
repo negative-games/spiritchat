@@ -1,16 +1,16 @@
 package gg.moonrise.chat.chat.listener;
 
+import gg.moonrise.chat.chat.format.ChatFormatService;
+import gg.moonrise.chat.chat.format.FormattedChatMessage;
+import gg.moonrise.chat.chat.format.GroupChatRenderer;
+import gg.moonrise.chat.chat.format.StaticChatRenderer;
+import gg.moonrise.chat.chat.integration.LuckPermsService;
+import gg.moonrise.chat.chat.item.ChatItemService;
 import gg.moonrise.chat.config.Config;
 import gg.moonrise.chat.config.ConfigService;
 import gg.moonrise.chat.config.section.chat.GroupChatSettings;
 import gg.moonrise.chat.config.section.chat.StaticChatSettings;
-import gg.moonrise.chat.chat.format.GroupChatRenderer;
-import gg.moonrise.chat.chat.format.StaticChatRenderer;
-import gg.moonrise.chat.chat.format.ChatFormatService;
-import gg.moonrise.chat.chat.item.ChatItemService;
 import gg.moonrise.chat.logging.service.ChatLogService;
-import gg.moonrise.chat.chat.format.FormattedChatMessage;
-import gg.moonrise.chat.chat.integration.LuckPermsService;
 import gg.moonrise.chat.mention.service.MentionService;
 import gg.moonrise.engine.message.util.MiniMessageUtil;
 import gg.moonrise.engine.state.Reloadable;
@@ -19,6 +19,7 @@ import gg.moonrise.moss.spring.Enableable;
 import gg.moonrise.moss.spring.SpringComponent;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -26,15 +27,12 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Slf4j
 @SpringComponent
+@RequiredArgsConstructor
 public class ChatListener implements Listener, Enableable, Disableable, Reloadable {
 
     private static volatile ChatRenderer GLOBAL_RENDERER;
-    private final Map<AsyncChatEvent, String> pendingChatInputs = new ConcurrentHashMap<>();
 
     private final ConfigService config;
     private final LuckPermsService luckPermsService;
@@ -42,15 +40,6 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
     private final ChatItemService chatItemService;
     private final ChatFormatService chatFormatService;
     private final ChatLogService chatLogService;
-
-    public ChatListener(ConfigService config, LuckPermsService luckPermsService, MentionService mentionService, ChatItemService chatItemService, ChatFormatService chatFormatService, ChatLogService chatLogService) {
-        this.config = config;
-        this.luckPermsService = luckPermsService;
-        this.mentionService = mentionService;
-        this.chatItemService = chatItemService;
-        this.chatFormatService = chatFormatService;
-        this.chatLogService = chatLogService;
-    }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onAsyncChatFormat(AsyncChatEvent event) {
@@ -60,13 +49,8 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
         FormattedChatMessage message = chatFormatService.prepareMessage(event.getPlayer(), event.message());
         event.viewers().remove(Bukkit.getConsoleSender());
         Bukkit.getLogger().info("[Chat] " + event.getPlayer().getName() + ": " + consoleLine(MiniMessageUtil.componentToPlainText(event.message())));
-        pendingChatInputs.put(event, message.input());
         event.message(message.component());
-        if (chatItemService.shouldShowcaseItem(message.input())) {
-            chatItemService.prepareSnapshot(event.getPlayer(), message.input());
-        } else {
-            chatItemService.clearSnapshot(event.getPlayer());
-        }
+        chatItemService.prepareSnapshot(event.getPlayer(), message.input());
 
         event.renderer(renderer);
     }
@@ -74,19 +58,14 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
     @EventHandler(priority = EventPriority.MONITOR)
     public void onAsyncChatComplete(AsyncChatEvent event) {
         if (event.isCancelled()) {
-            pendingChatInputs.remove(event);
             chatItemService.clearSnapshot(event.getPlayer());
             return;
         }
 
-        String input = pendingChatInputs.remove(event);
+        String input = GLOBAL_RENDERER == null ? null : MiniMessageUtil.componentToPlainText(event.message());
         mentionService.notifyMentionedPlayers(event.getPlayer(), input, event.viewers());
         chatLogService.log(event.getPlayer(), event.message());
         chatItemService.clearSnapshotAfterRender(event.getPlayer());
-    }
-
-    public ChatFormatService formatter() {
-        return chatFormatService;
     }
 
     private String consoleLine(String message) {
@@ -100,8 +79,7 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
 
     @Override
     public void onDisable() {
-        pendingChatInputs.clear();
-        ChatListener.setGlobalRenderer(null);
+        setGlobalRenderer(null);
     }
 
     @Override
@@ -111,7 +89,7 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
         Config config = this.config.get();
         StaticChatSettings staticChatSettings = config.getStaticChatSettings();
         if (staticChatSettings.isEnabled()) {
-            ChatListener.setGlobalRenderer(new StaticChatRenderer(this, staticChatSettings));
+            setGlobalRenderer(new StaticChatRenderer(chatFormatService, staticChatSettings));
             log.info("Successfully initialized Static Chat Renderer.");
             return;
         }
@@ -120,20 +98,20 @@ public class ChatListener implements Listener, Enableable, Disableable, Reloadab
         if (groupChatSettings.isEnabled()) {
             if (!luckPermsService.isAvailable()) {
                 log.error("LuckPerms not found! Cannot initialize Group Chat Renderer.");
-                ChatListener.setGlobalRenderer(null);
+                setGlobalRenderer(null);
                 return;
             }
 
-            ChatListener.setGlobalRenderer(new GroupChatRenderer(this, groupChatSettings, luckPermsService));
+            setGlobalRenderer(new GroupChatRenderer(chatFormatService, groupChatSettings, luckPermsService));
             log.info("Successfully initialized Group Chat Renderer.");
             return;
         }
 
-        ChatListener.setGlobalRenderer(null);
+        setGlobalRenderer(null);
         log.error("Could not initialize a Chat Renderer. Global chat messages will not be formatted.");
     }
 
-    public static void setGlobalRenderer(ChatRenderer renderer) {
+    private static void setGlobalRenderer(ChatRenderer renderer) {
         GLOBAL_RENDERER = renderer;
     }
 }

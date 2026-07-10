@@ -2,6 +2,7 @@ package gg.moonrise.chat.command;
 
 import gg.moonrise.chat.config.ConfigService;
 import gg.moonrise.chat.util.PlatformTasks;
+import gg.moonrise.engine.message.Message;
 import gg.moonrise.engine.paper.command.PaperCommand;
 import gg.moonrise.moss.spring.SpringComponent;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -34,12 +35,10 @@ public class CommandSpiritChat implements PaperCommand {
 
     private void sendHelp(CommandSender sender) {
         PlatformTasks.run(sender, () -> {
-            if (sender.hasPermission("spiritchat.admin")) {
-                configService.send(sender, configService.messages().getGeneral().getAdminHelp());
-                return;
-            }
-
-            configService.send(sender, configService.messages().getGeneral().getHelp());
+            Message help = sender.hasPermission("spiritchat.admin")
+                    ? configService.messages().getGeneral().getAdminHelp()
+                    : configService.messages().getGeneral().getHelp();
+            configService.send(sender, help);
         });
     }
 }

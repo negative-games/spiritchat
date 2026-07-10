@@ -40,11 +40,11 @@ dependencies {
     compileOnly("gg.moonrise.moss:moss-common:1.2.2")
     compileOnly("gg.moonrise.moss:moss-paper:1.2.2")
 
-    compileOnly("io.vavr:vavr:0.10.7")
-
     compileOnly("de.exlll:configlib-yaml:4.8.1")
 
     compileOnly("com.github.ben-manes.caffeine:caffeine:3.2.3")
+
+    compileOnly("net.luckperms:api:5.4")
 
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
@@ -53,10 +53,8 @@ dependencies {
     testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     testImplementation("de.exlll:configlib-yaml:4.8.1")
     testCompileOnly("gg.moonrise.moss:moss-common:1.2.2")
-    testCompileOnly("io.vavr:vavr:0.10.7")
     testRuntimeOnly("gg.moonrise.moss:moss-common:1.2.2")
     testRuntimeOnly("com.github.ben-manes.caffeine:caffeine:3.2.3")
-    testRuntimeOnly("io.vavr:vavr:0.10.7")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.14.4")
 }
 

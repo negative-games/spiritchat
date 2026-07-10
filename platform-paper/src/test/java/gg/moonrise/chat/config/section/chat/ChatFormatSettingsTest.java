@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,7 +46,17 @@ class ChatFormatSettingsTest {
 
         assertEquals(
                 "<dark_red>[Admin]</dark_red> <player><dark_gray>:</dark_gray> <message>",
-                settings.format("ADMIN").get()
+                settings.firstFormat(List.of("ADMIN")).get()
+        );
+    }
+
+    @Test
+    void firstGroupFormatUsesFirstMatchingWeightedGroup() {
+        GroupChatSettings settings = new GroupChatSettings();
+
+        assertEquals(
+                "<dark_red>[Admin]</dark_red> <player><dark_gray>:</dark_gray> <message>",
+                settings.firstFormat(List.of("missing", "ADMIN", "default")).get()
         );
     }
 
@@ -59,9 +70,9 @@ class ChatFormatSettingsTest {
         formats.put("missing", null);
         setFormats(settings, formats);
 
-        assertEquals("<red><player>: <message>", settings.format("admin").get());
-        assertTrue(settings.format("empty").isEmpty());
-        assertTrue(settings.format("missing").isEmpty());
+        assertEquals("<red><player>: <message>", settings.firstFormat(List.of("admin")).get());
+        assertTrue(settings.firstFormat(List.of("empty")).isEmpty());
+        assertTrue(settings.firstFormat(List.of("missing")).isEmpty());
     }
 
     @Test
@@ -70,7 +81,7 @@ class ChatFormatSettingsTest {
         setFormats(settings, null);
 
         assertTrue(settings.effectiveFormats().isEmpty());
-        assertTrue(settings.format("default").isEmpty());
+        assertTrue(settings.firstFormat(List.of("default")).isEmpty());
     }
 
     private void setFormats(GroupChatSettings settings, Map<String, String> formats) throws Exception {

@@ -2,8 +2,6 @@ package gg.moonrise.chat.config;
 
 import de.exlll.configlib.NameFormatters;
 import gg.moonrise.chat.SpiritChatPlugin;
-import gg.moonrise.chat.config.Config;
-import gg.moonrise.chat.config.Messages;
 import gg.moonrise.chat.config.serializer.MessageSerializer;
 import gg.moonrise.engine.config.Configuration;
 import gg.moonrise.engine.message.Message;

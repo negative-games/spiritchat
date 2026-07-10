@@ -2,12 +2,13 @@ package gg.moonrise.chat.config.section.chat;
 
 import de.exlll.configlib.Comment;
 import de.exlll.configlib.Configuration;
-import io.vavr.control.Option;
 import lombok.Getter;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Configuration
@@ -39,11 +40,20 @@ public class GroupChatSettings {
             "admin", "<dark_red>[Admin]</dark_red> <player><dark_gray>:</dark_gray> <message>"
     );
 
-    public Option<String> format(String group) {
-        if (group == null || group.isBlank()) return Option.none();
+    public Optional<String> firstFormat(Collection<String> groups) {
+        if (groups == null || groups.isEmpty()) return Optional.empty();
 
-        return Option.of(effectiveFormats().get(normalize(group)))
-                .filter(format -> !format.isBlank());
+        Map<String, String> formats = effectiveFormats();
+        for (String group : groups) {
+            if (group == null || group.isBlank()) continue;
+
+            String format = formats.get(normalize(group));
+            if (format != null && !format.isBlank()) {
+                return Optional.of(format);
+            }
+        }
+
+        return Optional.empty();
     }
 
     public Map<String, String> effectiveFormats() {

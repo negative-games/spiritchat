@@ -19,6 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -39,9 +40,9 @@ public class ChatItemService implements Disableable, Listener {
             .maximumSize(1_000)
             .expireAfterWrite(10, TimeUnit.SECONDS)
             .build();
-    private final java.util.Map<String, Pattern> placeholderPatterns = new ConcurrentHashMap<>();
+    private final Map<String, Pattern> placeholderPatterns = new ConcurrentHashMap<>();
 
-    public boolean shouldShowcaseItem(String input) {
+    private boolean shouldShowcaseItem(String input) {
         ChatItemSettings settings = configService.get().getChatItemSettings();
         return settings.isEnabled() && settings.containsChatItemSyntax(input);
     }
@@ -81,7 +82,7 @@ public class ChatItemService implements Disableable, Listener {
     }
 
     public void clearCache() {
-        clearSnapshots();
+        snapshots.invalidateAll();
         placeholderPatterns.clear();
     }
 
@@ -137,10 +138,6 @@ public class ChatItemService implements Disableable, Listener {
             log.warn("Failed to snapshot held item for chat item formatting.", exception);
             return null;
         }
-    }
-
-    private void clearSnapshots() {
-        snapshots.invalidateAll();
     }
 
     private void clearSnapshotIfCurrent(UUID playerId, ChatItemSnapshot snapshot) {
